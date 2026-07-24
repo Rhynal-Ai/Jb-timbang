@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard WB & QAQC - PT. Citra Lampia Mandiri</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex h-screen overflow-hidden">
+
+    <!-- Sidebar Navigasi Kiri -->
+    <aside class="w-64 bg-emerald-800 text-white flex flex-col shadow-lg z-20">
+        <div class="p-6 border-b border-emerald-700">
+            <h1 class="text-lg font-bold leading-tight">Dashboard WB QAQC</h1>
+            <p class="text-xs text-emerald-200 mt-1">PT. Citra Lampia Mandiri</p>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <button onclick="switchPage('timbang')" id="navTimbang" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm">
+                <i class="fa-solid fa-house text-base"></i> Dashboard Utama
+            </button>
+            <button onclick="switchPage('kecepatan')" id="navKecepatan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50">
+                <i class="fa-solid fa-gauge-high text-base"></i> Kecepatan Rata-Rata
+            </button>
+        </nav>
+        <div class="p-4 border-t border-emerald-700 text-xs text-emerald-300 text-center">
+            &copy; 2026 QAQC Team
+        </div>
+    </aside>
+
+    <!-- Konten Utama -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <header class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+            <h2 id="pageTitle" class="text-xl font-bold text-slate-800">Dashboard Utama</h2>
+            <div id="loadingIndicator" class="text-xs text-emerald-600 font-semibold flex items-center gap-2 hidden">
+                <i class="fa-solid fa-spinner fa-spin"></i> Memuat data...
+            </div>
+        </header>
+
+        <!-- HALAMAN 1: TIMBANG -->
+        <section id="pageTimbang" class="p-8 space-y-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-end gap-4">
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Mulai</label>
+                    <input type="date" id="timbangStart" class="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-emerald-600">
+                </div>
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Akhir</label>
+                    <input type="date" id="timbangEnd" class="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-emerald-600">
+                </div>
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Pilih Subkon</label>
+                    <select id="timbangSubkon" class="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-emerald-600">
+                        <option value="">Semua Subkon</option>
+                    </select>
+                </div>
+                <div>
+                    <button onclick="applyTimbangFilter()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2 rounded-xl text-sm transition shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-filter"></i> Filter
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-emerald-600 flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Netto</p>
+                        <h3 id="statTotalNetto" class="text-3xl font-extrabold text-slate-800 mt-1">0.00 ton</h3>
+                    </div>
+                    <div class="bg-emerald-50 p-4 rounded-xl text-emerald-600 text-xl"><i class="fa-solid fa-scale-balanced"></i></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-blue-500 flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Jumlah Total Transaksi</p>
+                        <h3 id="statTotalTx" class="text-3xl font-extrabold text-slate-800 mt-1">0</h3>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-xl text-blue-500 text-xl"><i class="fa-solid fa-truck"></i></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-96 flex flex-col">
+                    <h3 class="text-sm font-bold text-slate-800 mb-4">Netto Berdasarkan Subkon</h3>
+                    <div class="relative flex-grow"><canvas id="chartSubkon"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-96 flex flex-col">
+                    <h3 class="text-sm font-bold text-slate-800 mb-4">Netto Berdasarkan Supplier</h3>
+                    <div class="relative flex-grow"><canvas id="chartSupplier"></canvas></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- HALAMAN 2: KECEPATAN -->
+        <section id="pageKecepatan" class="p-8 space-y-6 hidden">
+            <!-- Filter Panel Kecepatan Lengkap dengan Klasifikasi -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-end gap-4">
+                <div class="flex-1 min-w-[180px]">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Mulai</label>
+                    <input type="date" id="speedStart" class="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-emerald-600">
+                </div>
+                <div class="flex-1 min-w-[180px]">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Akhir</label>
+                    <input type="date" id="speedEnd" class="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-emerald-600">
+                </div>
+                <div class="flex-1 min-w-[180px]">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Pilih Subkon</label>
+                    <select id="speedSubkon" class="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-emerald-600">
+                        <option value="">Semua Subkon</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-[180px]">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Klasifikasi</label>
+                    <select id="speedKlasifikasi" class="w-full bg-slate-50 border border-slate-300 px-3 py-2 rounded-xl text-sm focus:outline-none focus:border-emerald-600">
+                        <option value="">Semua Klasifikasi</option>
+                        <option value="STANDAR">Standar</option>
+                        <option value="UNDER SPEED">Under Speed</option>
+                        <option value="OVER SPEED">Over Speed</option>
+                    </select>
+                </div>
+                <div>
+                    <button onclick="applySpeedFilter()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2 rounded-xl text-sm transition shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-filter"></i> Filter
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-emerald-500">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Standar</p>
+                    <h3 id="statTotalStd" class="text-3xl font-extrabold text-slate-800 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-amber-500">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Under Speed</p>
+                    <h3 id="statTotalUnder" class="text-3xl font-extrabold text-slate-800 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-rose-500">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Over Speed</p>
+                    <h3 id="statTotalOver" class="text-3xl font-extrabold text-slate-800 mt-1">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-96 flex flex-col">
+                <h3 class="text-sm font-bold text-slate-800 mb-4">Klasifikasi Kecepatan Unit per Subkon</h3>
+                <div class="relative flex-grow"><canvas id="chartKecepatan"></canvas></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-96 flex flex-col lg:col-span-2">
+                    <h3 class="text-sm font-bold text-slate-800 mb-4">Persentase Pelanggaran Over Speed per Subkon (%)</h3>
+                    <div class="relative flex-grow"><canvas id="chartPersenOverSpeed"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-96 flex flex-col">
+                    <h3 class="text-sm font-bold text-slate-800 mb-4">Proporsi Total Kecepatan</h3>
+                    <div class="relative flex-grow"><canvas id="chartPieGlobal"></canvas></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxKUGNh_8X0MFJsUs4rp4_VPVDDN9xqqZ7nyBfBNdSd2UFLdAGUMor7Y2bYApUTdUOJ8Q/exec";
+
+        let c1, c2, c3, c4, c5;
+        let globalTimbangData = [];
+        let globalKecepatanData = [];
+
+        function switchPage(page) {
+            const btnTimbang = document.getElementById('navTimbang');
+            const btnKecepatan = document.getElementById('navKecepatan');
+            const secTimbang = document.getElementById('pageTimbang');
+            const secKecepatan = document.getElementById('pageKecepatan');
+            const pageTitle = document.getElementById('pageTitle');
+
+            if (page === 'timbang') {
+                btnTimbang.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm";
+                btnKecepatan.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50";
+                secTimbang.classList.remove('hidden');
+                secKecepatan.classList.add('hidden');
+                pageTitle.innerText = "Dashboard Utama";
+            } else {
+                btnKecepatan.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm";
+                btnTimbang.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50";
+                secKecepatan.classList.remove('hidden');
+                secTimbang.classList.add('hidden');
+                pageTitle.innerText = "Kecepatan Rata-Rata Unit";
+            }
+        }
+
+        async function loadDataFromSpreadsheet() {
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            try {
+                let response = await fetch(WEB_APP_URL);
+                let json = await response.json();
+
+                // 1. Parsing Timbang
+                let rowsTimbang = json.timbang || [];
+                globalTimbangData = [];
+                let headerTimbangIdx = rowsTimbang.findIndex(r => r && r.some(cell => String(cell).toUpperCase().includes("NETTO")));
+                if (headerTimbangIdx === -1) headerTimbangIdx = 5;
+
+                for (let i = headerTimbangIdx + 1; i < rowsTimbang.length; i++) {
+                    let row = rowsTimbang[i];
+                    if (!row || row.length < 12) continue;
+                    let supplier = row[2] ? String(row[2]).trim() : "Lainnya";
+                    let subkon = row[3] ? String(row[3]).trim() : "";
+                    let netto = parseFloat(row[10]);
+                    let rawDateOut = row[14] || row[13] || row[12] || "";
+
+                    if (subkon && !isNaN(netto) && netto > 0) {
+                        globalTimbangData.push({
+                            supplier: supplier,
+                            subkon: subkon,
+                            netto: netto,
+                            dateOut: parseUniversalDate(rawDateOut)
+                        });
+                    }
+                }
+
+                // 2. Parsing Kecepatan (Kombinasi Kolom G & Angka Kecepatan Kolom F)
+                let rowsKecepatan = json.kecepatan || [];
+                globalKecepatanData = [];
+                let headerSpeedIdx = rowsKecepatan.findIndex(r => r && r.some(cell => String(cell).toUpperCase().includes("SUBKON")));
+                if (headerSpeedIdx === -1) headerSpeedIdx = 6;
+
+                for (let i = headerSpeedIdx + 1; i < rowsKecepatan.length; i++) {
+                    let row = rowsKecepatan[i];
+                    if (!row || row.length === 0) continue;
+
+                    let subkon = row[0] ? String(row[0]).trim() : "";
+                    let rawDateIn = row[3] || ""; 
+                    let speedVal = parseFloat(row[5]); // Kolom F: Kecepatan (Km/Jam)
+                    let rawKlasifikasi = row[6] ? String(row[6]).trim() : ""; // Kolom G
+
+                    let klasifikasi = "STANDAR";
+                    let valStr = String(rawKlasifikasi).toUpperCase();
+
+                    if (valStr.includes("UNDER") || valStr.includes("LAMBAT")) {
+                        klasifikasi = "UNDER SPEED";
+                    } else if (valStr.includes("OVER") || valStr.includes("CEPAT") || valStr.includes("TINGGI")) {
+                        klasifikasi = "OVER SPEED";
+                    } else if (valStr.includes("STANDAR")) {
+                        klasifikasi = "STANDAR";
+                    } else if (!isNaN(speedVal)) {
+                        // Logika Fallback Standar Kecepatan dari tabel Anda (<18 Under, 18-23.2 Standar, >23.2 Over)
+                        if (speedVal < 18) {
+                            klasifikasi = "UNDER SPEED";
+                        } else if (speedVal > 23.2) {
+                            klasifikasi = "OVER SPEED";
+                        } else {
+                            klasifikasi = "STANDAR";
+                        }
+                    }
+
+                    if (subkon && !subkon.toUpperCase().includes("SUBKON") && !subkon.toUpperCase().includes("KLASIFIKASI")) {
+                        globalKecepatanData.push({
+                            subkon: subkon,
+                            date: parseUniversalDate(rawDateIn),
+                            klasifikasi: klasifikasi
+                        });
+                    }
+                }
+
+                populateDropdowns();
+                applyTimbangFilter();
+                applySpeedFilter();
+
+            } catch (error) {
+                console.error("Gagal memuat data:", error);
+            } finally {
+                document.getElementById('loadingIndicator').classList.add('hidden');
+            }
+        }
+
+        function parseUniversalDate(dateVal) {
+            if (!dateVal) return "";
+            if (!isNaN(dateVal) && Number(dateVal) > 30000) {
+                let d = new Date(Math.round((dateVal - 25569) * 86400 * 1000));
+                return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+            }
+            let strVal = String(dateVal).trim();
+            const months = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
+            let parts = strVal.split(/[\/\-\s]/);
+            if (parts.length === 3 && months[parts[1].toLowerCase()]) {
+                return `${parts[2].length === 2 ? '20'+parts[2] : parts[2]}-${months[parts[1].toLowerCase()]}-${parts[0].padStart(2, '0')}`;
+            }
+            let d = new Date(dateVal);
+            if (!isNaN(d.getTime())) {
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            }
+            return strVal.substring(0, 10);
+        }
+
+        function populateDropdowns() {
+            let subkonTimbang = [...new Set(globalTimbangData.map(i => i.subkon))].sort();
+            let selectTimbang = document.getElementById('timbangSubkon');
+            selectTimbang.innerHTML = '<option value="">Semua Subkon</option>';
+            subkonTimbang.forEach(s => selectTimbang.add(new Option(s, s)));
+
+            let subkonKecepatan = [...new Set(globalKecepatanData.map(i => i.subkon))].sort();
+            let selectKecepatan = document.getElementById('speedSubkon');
+            selectKecepatan.innerHTML = '<option value="">Semua Subkon</option>';
+            subkonKecepatan.forEach(s => selectKecepatan.add(new Option(s, s)));
+        }
+
+        function applyTimbangFilter() {
+            let tStart = document.getElementById('timbangStart').value;
+            let tEnd = document.getElementById('timbangEnd').value;
+            let tSubkon = document.getElementById('timbangSubkon').value;
+
+            let filtered = globalTimbangData.filter(item => {
+                let matchDate = true;
+                if (item.dateOut) {
+                    if (tStart && tEnd) matchDate = (item.dateOut >= tStart && item.dateOut <= tEnd);
+                    else if (tStart) matchDate = (item.dateOut >= tStart);
+                    else if (tEnd) matchDate = (item.dateOut <= tEnd);
+                }
+                return matchDate && (tSubkon ? item.subkon === tSubkon : true);
+            });
+
+            renderDashboardTimbang(filtered);
+        }
+
+        function applySpeedFilter() {
+            let sStart = document.getElementById('speedStart').value;
+            let sEnd = document.getElementById('speedEnd').value;
+            let sSubkon = document.getElementById('speedSubkon').value;
+            let sKlasifikasi = document.getElementById('speedKlasifikasi').value;
+
+            let filtered = globalKecepatanData.filter(item => {
+                let matchDate = true;
+                if (item.date) {
+                    if (sStart && sEnd) matchDate = (item.date >= sStart && item.date <= sEnd);
+                    else if (sStart) matchDate = (item.date >= sStart);
+                    else if (sEnd) matchDate = (item.date <= sEnd);
+                }
+                let matchSubkon = sSubkon ? (item.subkon === sSubkon) : true;
+                let matchKlasifikasi = sKlasifikasi ? (item.klasifikasi === sKlasifikasi) : true;
+                return matchDate && matchSubkon && matchKlasifikasi;
+            });
+
+            renderDashboardKecepatan(filtered);
+        }
+
+        function renderDashboardTimbang(data) {
+            let totalNetto = data.reduce((a, b) => a + b.netto, 0);
+            document.getElementById('statTotalNetto').innerText = totalNetto.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ton';
+            document.getElementById('statTotalTx').innerText = data.length;
+
+            let subMap = {}; data.forEach(i => subMap[i.subkon] = (subMap[i.subkon] || 0) + i.netto);
+            if(c1) c1.destroy();
+            c1 = new Chart(document.getElementById('chartSubkon'), {
+                type: 'bar', plugins: [ChartDataLabels],
+                data: { labels: Object.keys(subMap), datasets: [{ label: 'Netto (Ton)', data: Object.values(subMap), backgroundColor: '#059669' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor: 'end', align: 'top', formatter: (v) => v.toLocaleString('id-ID', { maximumFractionDigits: 0 }), font: { size: 10, weight: 'bold' }, color: '#334155' } }, scales: { y: { grace: '10%' } } }
+            });
+
+            let supMap = {}; data.forEach(i => supMap[i.supplier] = (supMap[i.supplier] || 0) + i.netto);
+            if(c2) c2.destroy();
+            c2 = new Chart(document.getElementById('chartSupplier'), {
+                type: 'bar', plugins: [ChartDataLabels],
+                data: { labels: Object.keys(supMap), datasets: [{ label: 'Netto (Ton)', data: Object.values(supMap), backgroundColor: '#3b82f6' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor: 'end', align: 'top', formatter: (v) => v.toLocaleString('id-ID', { maximumFractionDigits: 0 }), font: { size: 10, weight: 'bold' }, color: '#334155' } }, scales: { y: { grace: '10%' } } }
+            });
+        }
+
+        function renderDashboardKecepatan(data) {
+            let totalStd = data.filter(i => i.klasifikasi === 'STANDAR').length;
+            let totalUnder = data.filter(i => i.klasifikasi === 'UNDER SPEED').length;
+            let totalOver = data.filter(i => i.klasifikasi === 'OVER SPEED').length;
+
+            document.getElementById('statTotalStd').innerText = totalStd;
+            document.getElementById('statTotalUnder').innerText = totalUnder;
+            document.getElementById('statTotalOver').innerText = totalOver;
+
+            let subkons = [...new Set(data.map(i => i.subkon))];
+            let std = subkons.map(s => data.filter(i => i.subkon === s && i.klasifikasi === 'STANDAR').length);
+            let under = subkons.map(s => data.filter(i => i.subkon === s && i.klasifikasi === 'UNDER SPEED').length);
+            let over = subkons.map(s => data.filter(i => i.subkon === s && i.klasifikasi === 'OVER SPEED').length);
+
+            if(c3) c3.destroy();
+            c3 = new Chart(document.getElementById('chartKecepatan'), {
+                type: 'bar', plugins: [ChartDataLabels],
+                data: {
+                    labels: subkons,
+                    datasets: [
+                        { label: 'Standar', data: std, backgroundColor: '#10b981' },
+                        { label: 'Under Speed', data: under, backgroundColor: '#f59e0b' },
+                        { label: 'Over Speed', data: over, backgroundColor: '#f43f5e' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor: 'center', align: 'center', formatter: (v) => v > 0 ? v : '', font: { size: 10, weight: 'bold' }, color: '#ffffff' } }, scales: { x: { stacked: true }, y: { stacked: true, grace: '10%' } } }
+            });
+
+            let persenData = subkons.map(s => {
+                let totalTrip = globalKecepatanData.filter(i => i.subkon === s).length;
+                let overTrip = globalKecepatanData.filter(i => i.subkon === s && i.klasifikasi === 'OVER SPEED').length;
+                return totalTrip === 0 ? 0 : parseFloat(((overTrip / totalTrip) * 100).toFixed(1));
+            });
+
+            if(c4) c4.destroy();
+            c4 = new Chart(document.getElementById('chartPersenOverSpeed'), {
+                type: 'bar', plugins: [ChartDataLabels],
+                data: { labels: subkons, datasets: [{ label: 'Persentase Over Speed (%)', data: persenData, backgroundColor: '#ef4444' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor: 'end', align: 'top', formatter: (v) => v > 0 ? v + '%' : '', font: { size: 10, weight: 'bold' }, color: '#334155' } }, scales: { y: { beginAtZero: true, max: 100, ticks: { callback: (v) => v + '%' }, grace: '10%' } } }
+            });
+
+            if(c5) c5.destroy();
+            c5 = new Chart(document.getElementById('chartPieGlobal'), {
+                type: 'doughnut', plugins: [ChartDataLabels],
+                data: { labels: ['Standar', 'Under Speed', 'Over Speed'], datasets: [{ data: [totalStd, totalUnder, totalOver], backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'] }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                        datalabels: {
+                            formatter: (value, ctx) => {
+                                let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                if (sum === 0 || value === 0) return '';
+                                return (value * 100 / sum).toFixed(1) + "%";
+                            },
+                            color: '#ffffff', font: { weight: 'bold', size: 11 }
+                        }
+                    }
+                }
+            });
+        }
+
+        window.onload = loadDataFromSpreadsheet;
+    </script>
+</body>
+</html>
