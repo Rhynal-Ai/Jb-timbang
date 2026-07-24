@@ -4,81 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard WB & QAQC - PT. Citra Lampia Mandiri</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js & Plugin Datalabels -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
     </style>
 </head>
-<body class="text-slate-800 antialiased flex h-screen overflow-hidden relative">
+<body class="text-slate-800 antialiased flex h-screen overflow-hidden">
 
-    <!-- 1. HALAMAN LOGIN -->
-    <div id="loginOverlay" class="fixed inset-0 z-50 bg-slate-900 bg-opacity-70 flex items-center justify-center transition-opacity duration-300">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md mx-4">
-            <div class="text-center mb-8">
-                <div class="inline-block p-4 bg-emerald-100 rounded-full text-emerald-600 mb-3 text-3xl">
-                    <i class="fas fa-shield-alt"></i>
+    <!-- MODAL / HALAMAN LOGIN -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-slate-100">
+            <div class="text-center mb-6">
+                <div class="inline-flex bg-emerald-100 text-emerald-800 p-3 rounded-2xl text-2xl mb-3">
+                    <i class="fa-solid fa-lock"></i>
                 </div>
-                <h2 class="text-3xl font-bold text-emerald-800">EFO QAQC</h2>
-                <p class="text-slate-500 mt-2 text-sm">Silakan login untuk mengakses sistem dashboard</p>
+                <h2 class="text-xl font-bold text-slate-800">Login Dashboard WB & QAQC</h2>
+                <p class="text-xs text-slate-500 mt-1">PT. Citra Lampia Mandiri</p>
             </div>
-            <div class="space-y-4">
+            <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                    <input type="text" id="loginUser" placeholder="Masukkan username" class="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Username</label>
+                    <input type="text" id="loginUser" required class="w-full bg-slate-50 border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-emerald-600" placeholder="Masukkan username">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                    <input type="password" id="loginPass" placeholder="Masukkan password" class="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
+                    <input type="password" id="loginPass" required class="w-full bg-slate-50 border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-emerald-600" placeholder="Masukkan password">
                 </div>
-                <button onclick="prosesLogin()" class="w-full bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-emerald-700 transition-colors mt-2 shadow-lg shadow-emerald-600/30">
-                    MASUK DASHBOARD
+                <p id="loginError" class="text-xs text-rose-500 font-semibold hidden">Username atau password salah!</p>
+                <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl text-sm transition shadow-sm">
+                    Masuk Dashboard
                 </button>
-            </div>
+            </form>
         </div>
     </div>
 
     <!-- Sidebar Navigasi Kiri -->
-    <aside id="sidebar" class="w-64 bg-emerald-800 text-white flex flex-col shadow-lg z-40 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 h-full">
+    <aside class="w-64 bg-emerald-800 text-white flex flex-col shadow-lg z-20">
         <div class="p-6 border-b border-emerald-700">
             <h1 class="text-lg font-bold leading-tight">Dashboard WB QAQC</h1>
             <p class="text-xs text-emerald-200 mt-1">PT. Citra Lampia Mandiri</p>
         </div>
         <nav class="flex-1 p-4 space-y-2">
-            <button onclick="switchPage('timbang'); tutupSidebarDiHP();" id="navTimbang" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm text-left">
+            <button onclick="switchPage('timbang')" id="navTimbang" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm">
                 <i class="fa-solid fa-house text-base"></i> Dashboard Utama
             </button>
-            <button onclick="switchPage('kecepatan'); tutupSidebarDiHP();" id="navKecepatan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50 text-left">
+            <button onclick="switchPage('kecepatan')" id="navKecepatan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50">
                 <i class="fa-solid fa-gauge-high text-base"></i> Kecepatan Rata-Rata
             </button>
         </nav>
-        <div class="p-4 border-t border-emerald-700 text-xs text-emerald-300 text-center">
-            &copy; 2026 QAQC Team
+        <div class="p-4 border-t border-emerald-700 flex justify-between items-center text-xs text-emerald-200">
+            <span>&copy; 2026 QAQC Team</span>
+            <button onclick="logout()" class="hover:text-white underline"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
         </div>
     </aside>
 
     <!-- Konten Utama -->
     <main class="flex-1 flex flex-col h-screen overflow-y-auto">
-        <header class="bg-white border-b border-slate-200 px-6 md:px-8 py-4 flex justify-between items-center sticky top-0 z-30 shadow-sm">
-            <div class="flex items-center gap-4">
-                <button onclick="toggleSidebar()" class="text-emerald-800 text-xl md:hidden focus:outline-none">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <h2 id="pageTitle" class="text-xl font-bold text-slate-800">Dashboard Utama</h2>
-            </div>
+        <header class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+            <h2 id="pageTitle" class="text-xl font-bold text-slate-800">Dashboard Utama</h2>
             <div id="loadingIndicator" class="text-xs text-emerald-600 font-semibold flex items-center gap-2 hidden">
                 <i class="fa-solid fa-spinner fa-spin"></i> Memuat data...
             </div>
         </header>
 
         <!-- HALAMAN 1: TIMBANG -->
-        <section id="pageTimbang" class="p-4 md:p-8 space-y-6">
+        <section id="pageTimbang" class="p-8 space-y-6">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-end gap-4">
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Mulai</label>
@@ -131,7 +125,7 @@
         </section>
 
         <!-- HALAMAN 2: KECEPATAN -->
-        <section id="pageKecepatan" class="p-4 md:p-8 space-y-6 hidden">
+        <section id="pageKecepatan" class="p-8 space-y-6 hidden">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-end gap-4">
                 <div class="flex-1 min-w-[180px]">
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Mulai</label>
@@ -194,17 +188,23 @@
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                    <h3 class="font-bold text-sm text-slate-800">Detail Data Kecepatan Unit</h3>
-                    <button onclick="downloadDataCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-xl text-sm transition-colors flex items-center gap-2 shadow-sm">
-                        <i class="fas fa-file-excel"></i> Download Data (CSV)
-                    </button>
-                </div>
-                <div class="overflow-x-auto h-96 border border-slate-200 rounded-xl">
-                    <table class="w-full text-sm text-left whitespace-nowrap">
-                        <thead class="bg-slate-100 sticky top-0 shadow-sm" id="tableHeader"></thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-200"></tbody>
+            <!-- TABEL DETAIL DATA KECEPATAN DENGAN FORMAT TEKS RAPI -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col space-y-4">
+                <h3 class="text-sm font-bold text-slate-800">Detail Log Kecepatan Unit</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 uppercase">
+                                <th class="p-3 border-b">Tanggal</th>
+                                <th class="p-3 border-b">Subkon</th>
+                                <th class="p-3 border-b">Kecepatan (Km/Jam)</th>
+                                <th class="p-3 border-b">Klasifikasi</th>
+                                <th class="p-3 border-b">Risk-Based Assessment</th>
+                            </tr>
+                        </thead>
+                        <tbody id="speedTableBody">
+                            <tr><td colspan="5" class="p-4 text-center text-slate-400">Memuat detail data...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -219,33 +219,33 @@
         let globalKecepatanData = [];
         let rawDataKecepatanTable = [];
 
-        function prosesLogin() {
-            const user = document.getElementById('loginUser').value.trim();
-            const pass = document.getElementById('loginPass').value.trim();
-            
-            if (user === 'EFOQAQC' && pass === 'EFO2026') {
-                const overlay = document.getElementById('loginOverlay');
-                overlay.style.opacity = '0';
-                setTimeout(() => { overlay.style.display = 'none'; }, 300);
+        // Fungsi Login Sederhana
+        function handleLogin(event) {
+            event.preventDefault();
+            let u = document.getElementById('loginUser').value.trim();
+            let p = document.getElementById('loginPass').value.trim();
+
+            // Ubah kredensial sesuai kebutuhan Anda
+            if (u === 'admin' && p === 'clm2026') {
+                localStorage.setItem('isLoggedIn', 'true');
+                document.getElementById('loginModal').classList.add('hidden');
                 loadDataFromSpreadsheet();
             } else {
-                alert('Username atau Password salah!');
+                document.getElementById('loginError').classList.remove('hidden');
             }
         }
 
-        document.getElementById('loginPass').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') prosesLogin();
+        function logout() {
+            localStorage.removeItem('isLoggedIn');
+            location.reload();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                document.getElementById('loginModal').classList.add('hidden');
+                loadDataFromSpreadsheet();
+            }
         });
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
-        }
-
-        function tutupSidebarDiHP() {
-            if (window.innerWidth < 768) {
-                document.getElementById('sidebar').classList.add('-translate-x-full');
-            }
-        }
 
         function switchPage(page) {
             const btnTimbang = document.getElementById('navTimbang');
@@ -255,14 +255,14 @@
             const pageTitle = document.getElementById('pageTitle');
 
             if (page === 'timbang') {
-                btnTimbang.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm text-left";
-                btnKecepatan.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50 text-left";
+                btnTimbang.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm";
+                btnKecepatan.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50";
                 secTimbang.classList.remove('hidden');
                 secKecepatan.classList.add('hidden');
                 pageTitle.innerText = "Dashboard Utama";
             } else {
-                btnKecepatan.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm text-left";
-                btnTimbang.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50 text-left";
+                btnKecepatan.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm";
+                btnTimbang.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50";
                 secKecepatan.classList.remove('hidden');
                 secTimbang.classList.add('hidden');
                 pageTitle.innerText = "Kecepatan Rata-Rata Unit";
@@ -275,95 +275,113 @@
                 let response = await fetch(WEB_APP_URL);
                 let json = await response.json();
 
-                // 1. Parsing Timbang dengan Deteksi Header Akurat
+                // 1. Parsing Timbang
                 let rowsTimbang = json.timbang || [];
                 globalTimbangData = [];
-                
-                let headTimbang = rowsTimbang[0] || [];
-                let idxSup = headTimbang.findIndex(h => String(h).toUpperCase().includes("SUPPLIER"));
-                let idxSub = headTimbang.findIndex(h => String(h).toUpperCase().includes("SUBKON"));
-                let idxNet = headTimbang.findIndex(h => String(h).toUpperCase().includes("NETTO"));
-                let idxDt  = headTimbang.findIndex(h => String(h).toUpperCase().includes("OUT (DATE)") || String(h).toUpperCase().includes("TANGGAL"));
+                let headerTimbangIdx = rowsTimbang.findIndex(r => r && r.some(cell => String(cell).toUpperCase().includes("NETTO")));
+                if (headerTimbangIdx === -1) headerTimbangIdx = 5;
 
-                if (idxSup === -1) idxSup = 2;
-                if (idxSub === -1) idxSub = 3;
-                if (idxNet === -1) idxNet = 9; 
-                if (idxDt === -1) idxDt = 14;
-
-                for (let i = 1; i < rowsTimbang.length; i++) {
+                for (let i = headerTimbangIdx + 1; i < rowsTimbang.length; i++) {
                     let row = rowsTimbang[i];
-                    if (!row || row.length === 0) continue;
-                    
-                    let supplier = row[idxSup] ? String(row[idxSup]).trim() : "Lainnya";
-                    let subkon = row[idxSub] ? String(row[idxSub]).trim() : "";
-                    let netto = parseFloat(row[idxNet]) || 0;
-                    let rawDate = row[idxDt] || "";
+                    if (!row || row.length < 12) continue;
+                    let supplier = row[2] ? String(row[2]).trim() : "Lainnya";
+                    let subkon = row[3] ? String(row[3]).trim() : "";
+                    let netto = parseFloat(row[10]);
+                    let rawDateOut = row[14] || row[13] || row[12] || "";
 
-                    if (subkon && !subkon.toUpperCase().includes("SUBKON") && netto > 0 && netto < 1000) {
+                    if (subkon && !isNaN(netto) && netto > 0) {
                         globalTimbangData.push({
-                            supplier: supplier !== "" ? supplier : "Lainnya",
+                            supplier: supplier,
                             subkon: subkon,
                             netto: netto,
-                            dateOut: parseUniversalDate(rawDate)
+                            dateOut: parseUniversalDate(rawDateOut)
                         });
                     }
                 }
 
-                // 2. Parsing Kecepatan & Format Tabel Detail
+                // 2. Parsing Kecepatan
                 let rowsKecepatan = json.kecepatan || [];
                 globalKecepatanData = [];
-                
-                let headSpeed = rowsKecepatan[0] || [];
-                let sSub = headSpeed.findIndex(h => String(h).toUpperCase().includes("SUBKON"));
-                let sDate = headSpeed.findIndex(h => String(h).toUpperCase().includes("IN (DATE)") || String(h).toUpperCase().includes("TANGGAL"));
-                let sVal = headSpeed.findIndex(h => String(h).toUpperCase().includes("KECEPATAN"));
-                let sKlas = headSpeed.findIndex(h => String(h).toUpperCase().includes("KLASIFIKASI"));
-                let sRisk = headSpeed.findIndex(h => String(h).toUpperCase().includes("RISK"));
-
-                if (sSub === -1) sSub = 0;
-                if (sDate === -1) sDate = 3;
-                if (sVal === -1) sVal = 5;
-                if (sKlas === -1) sKlas = 6;
-                if (sRisk === -1) sRisk = 7;
-
-                // Salin untuk tabel dengan konversi angka ke teks agar mudah dibaca
                 rawDataKecepatanTable = [];
-                if (rowsKecepatan.length > 0) {
-                    rawDataKecepatanTable.push(rowsKecepatan[0]); // Header
-                }
+                let headerSpeedIdx = rowsKecepatan.findIndex(r => r && r.some(cell => String(cell).toUpperCase().includes("SUBKON")));
+                if (headerSpeedIdx === -1) headerSpeedIdx = 6;
 
-                for (let i = 1; i < rowsKecepatan.length; i++) {
-                    let row = [...rowsKecepatan[i]]; // Salin baris
+                for (let i = headerSpeedIdx + 1; i < rowsKecepatan.length; i++) {
+                    let row = rowsKecepatan[i];
                     if (!row || row.length === 0) continue;
 
-                    let subkon = row[sSub] ? String(row[sSub]).trim() : "";
-                    let rawDateIn = row[sDate] || "";
-                    let speedVal = parseFloat(row[sVal]) || 0;
-                    let rawKlas = row[sKlas];
-                    let rawRisk = row[sRisk];
+                    let subkon = row[0] ? String(row[0]).trim() : "";
+                    let rawDateIn = row[3] || ""; 
+                    let speedVal = parseFloat(row[5]); // Kolom F: Kecepatan
+                    let rawKlasifikasi = row[6] ? String(row[6]).trim() : ""; // Kolom G
 
-                    // Fungsi konversi angka/teks klasifikasi
-                    let klasifikasiText = mapKlasifikasi(rawKlas, speedVal);
-                    let riskText = mapRiskBased(rawRisk);
+                    let klasifikasi = "STANDAR";
+                    let valStr = String(rawKlasifikasi).toUpperCase();
 
-                    // Masukkan kembali teks hasil konversi ke baris tabel agar tampil rapi
-                    if (sKlas !== -1) row[sKlas] = klasifikasiText;
-                    if (sRisk !== -1) row[sRisk] = riskText;
-                    rawDataKecepatanTable.push(row);
+                    if (valStr.includes("UNDER") || valStr.includes("LAMBAT")) {
+                        klasifikasi = "UNDER SPEED";
+                    } else if (valStr.includes("OVER") || valStr.includes("CEPAT") || valStr.includes("TINGGI")) {
+                        klasifikasi = "OVER SPEED";
+                    } else if (valStr.includes("STANDAR")) {
+                        klasifikasi = "STANDAR";
+                    } else if (!isNaN(speedVal)) {
+                        if (speedVal < 18) {
+                            klasifikasi = "UNDER SPEED";
+                        } else if (speedVal > 23.2) {
+                            klasifikasi = "OVER SPEED";
+                        } else {
+                            klasifikasi = "STANDAR";
+                        }
+                    }
 
-                    if (subkon && !subkon.toUpperCase().includes("SUBKON")) {
-                        globalKecepatanData.push({
+                    if (subkon && !subkon.toUpperCase().includes("SUBKON") && !subkon.toUpperCase().includes("KLASIFIKASI")) {
+                        let formattedDate = parseUniversalDate(rawDateIn);
+                        
+                        // Pemetaan Teks Keterangan Detail Data
+                        let textKlasifikasi = klasifikasi;
+                        let textRisk = "Risiko Rendah (Aman)";
+                        if (klasifikasi === "OVER SPEED") {
+                            textRisk = "Risiko Tinggi (Perlu Tindakan Korektif)";
+                        } else if (klasifikasi === "UNDER SPEED") {
+                            textRisk = "Risiko Sedang (Hambatan Alur/Bottleneck)";
+                        }
+
+                        let item = {
                             subkon: subkon,
-                            date: parseUniversalDate(rawDateIn),
-                            klasifikasi: klasifikasiText
-                        });
+                            date: formattedDate,
+                            speed: !isNaN(speedVal) ? speedVal.toFixed(1) : "-",
+                            klasifikasi: textKlasifikasi,
+                            risk: textRisk
+                        };
+
+                        globalKecepatanData.push(item);
+                        rawDataKecepatanTable.push(item);
                     }
                 }
 
                 populateDropdowns();
+
+                // Set Tanggal Otomatis
+                if (globalTimbangData.length > 0) {
+                    let datesTimbang = globalTimbangData.map(i => i.dateOut).filter(d => d);
+                    if (datesTimbang.length > 0) {
+                        datesTimbang.sort();
+                        document.getElementById('timbangStart').value = datesTimbang[0];
+                        document.getElementById('timbangEnd').value = datesTimbang[datesTimbang.length - 1];
+                    }
+                }
+
+                if (globalKecepatanData.length > 0) {
+                    let datesSpeed = globalKecepatanData.map(i => i.date).filter(d => d);
+                    if (datesSpeed.length > 0) {
+                        datesSpeed.sort();
+                        document.getElementById('speedStart').value = datesSpeed[0];
+                        document.getElementById('speedEnd').value = datesSpeed[datesSpeed.length - 1];
+                    }
+                }
+
                 applyTimbangFilter();
                 applySpeedFilter();
-                renderTabelKecepatan(rawDataKecepatanTable);
 
             } catch (error) {
                 console.error("Gagal memuat data:", error);
@@ -372,40 +390,23 @@
             }
         }
 
-        function mapKlasifikasi(val, speed) {
-            let s = String(val).trim().toUpperCase();
-            if (s === "1" || s.includes("OVER") || s.includes("TINGGI")) return "OVER SPEED";
-            if (s === "0" || s === "2" || s.includes("UNDER") || s.includes("LAMBAT")) return "UNDER SPEED";
-            if (s === "STANDAR" || s === "NORMAL") return "STANDAR";
-            
-            // Logika otomatis berdasarkan nilai kecepatan jika berupa angka
-            if (!isNaN(parseFloat(val)) && parseFloat(val) === 0 && speed > 0) {
-                if (speed < 18) return "UNDER SPEED";
-                if (speed > 23.2) return "OVER SPEED";
-                return "STANDAR";
-            }
-            return val || "STANDAR";
-        }
-
-        function mapRiskBased(val) {
-            let s = String(val).trim().toUpperCase();
-            if (s === "1" || s.includes("HIGH") || s.includes("TINGGI")) return "HIGH RISK";
-            if (s === "0" || s === "LOW" || s.includes("RENDAH")) return "LOW RISK";
-            if (s === "2" || s.includes("MEDIUM") || s.includes("SEDANG")) return "MEDIUM RISK";
-            return val || "LOW RISK";
-        }
-
         function parseUniversalDate(dateVal) {
             if (!dateVal) return "";
             if (!isNaN(dateVal) && Number(dateVal) > 30000) {
                 let d = new Date(Math.round((dateVal - 25569) * 86400 * 1000));
                 return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
             }
+            let strVal = String(dateVal).trim();
+            const months = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
+            let parts = strVal.split(/[\/\-\s]/);
+            if (parts.length === 3 && months[parts[1].toLowerCase()]) {
+                return `${parts[2].length === 2 ? '20'+parts[2] : parts[2]}-${months[parts[1].toLowerCase()]}-${parts[0].padStart(2, '0')}`;
+            }
             let d = new Date(dateVal);
             if (!isNaN(d.getTime())) {
                 return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             }
-            return String(dateVal).substring(0, 10);
+            return strVal.substring(0, 10);
         }
 
         function populateDropdowns() {
@@ -427,9 +428,11 @@
 
             let filtered = globalTimbangData.filter(item => {
                 let matchDate = true;
-                if (item.dateOut && tStart && tEnd) matchDate = (item.dateOut >= tStart && item.dateOut <= tEnd);
-                else if (item.dateOut && tStart) matchDate = (item.dateOut >= tStart);
-                else if (item.dateOut && tEnd) matchDate = (item.dateOut <= tEnd);
+                if (item.dateOut) {
+                    if (tStart && tEnd) matchDate = (item.dateOut >= tStart && item.dateOut <= tEnd);
+                    else if (tStart) matchDate = (item.dateOut >= tStart);
+                    else if (tEnd) matchDate = (item.dateOut <= tEnd);
+                }
                 return matchDate && (tSubkon ? item.subkon === tSubkon : true);
             });
 
@@ -444,15 +447,18 @@
 
             let filtered = globalKecepatanData.filter(item => {
                 let matchDate = true;
-                if (item.date && sStart && sEnd) matchDate = (item.date >= sStart && item.date <= sEnd);
-                else if (item.date && sStart) matchDate = (item.date >= sStart);
-                else if (item.date && sEnd) matchDate = (item.date <= sEnd);
+                if (item.date) {
+                    if (sStart && sEnd) matchDate = (item.date >= sStart && item.date <= sEnd);
+                    else if (sStart) matchDate = (item.date >= sStart);
+                    else if (sEnd) matchDate = (item.date <= sEnd);
+                }
                 let matchSubkon = sSubkon ? (item.subkon === sSubkon) : true;
                 let matchKlasifikasi = sKlasifikasi ? (item.klasifikasi === sKlasifikasi) : true;
                 return matchDate && matchSubkon && matchKlasifikasi;
             });
 
             renderDashboardKecepatan(filtered);
+            renderTabelKecepatan(filtered);
         }
 
         function renderDashboardTimbang(data) {
@@ -539,53 +545,34 @@
             });
         }
 
-        function renderTabelKecepatan(dataArray) {
-            const thead = document.getElementById('tableHeader');
-            const tbody = document.getElementById('tableBody');
-            if(!thead || !tbody) return;
-            thead.innerHTML = ''; tbody.innerHTML = '';
+        function renderTabelKecepatan(data) {
+            let tbody = document.getElementById('speedTableBody');
+            tbody.innerHTML = "";
 
-            if(dataArray.length === 0) return;
-
-            let trHead = document.createElement('tr');
-            dataArray[0].forEach(h => {
-                let th = document.createElement('th');
-                th.className = "px-4 py-3 font-semibold text-slate-700 text-xs uppercase";
-                th.textContent = h;
-                trHead.appendChild(th);
-            });
-            thead.appendChild(trHead);
-
-            for (let i = 1; i < dataArray.length; i++) {
-                let tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50";
-                dataArray[i].forEach(cell => {
-                    let td = document.createElement('td');
-                    td.className = "px-4 py-2 text-slate-600 text-xs";
-                    td.textContent = cell;
-                    tr.appendChild(td);
-                });
-                tbody.appendChild(tr);
-            }
-        }
-
-        function downloadDataCSV() {
-            if (rawDataKecepatanTable.length === 0) {
-                alert("Data belum tersedia.");
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Tidak ada data yang cocok dengan filter</td></tr>`;
                 return;
             }
-            let csvContent = "data:text/csv;charset=utf-8,";
-            rawDataKecepatanTable.forEach(row => {
-                let rowStr = row.map(item => `"${item}"`).join(",");
-                csvContent += rowStr + "\r\n";
+
+            // Batasi tampilan maksimal 50 baris agar performa tetap ringan
+            let displayData = data.slice(0, 50);
+
+            displayData.forEach(item => {
+                let badgeColor = "bg-emerald-100 text-emerald-800";
+                if (item.klasifikasi === "OVER SPEED") badgeColor = "bg-rose-100 text-rose-800";
+                else if (item.klasifikasi === "UNDER SPEED") badgeColor = "bg-amber-100 text-amber-800";
+
+                let row = `
+                    <tr class="border-b hover:bg-slate-50 transition">
+                        <td class="p-3 text-slate-600">${item.date || '-'}</td>
+                        <td class="p-3 font-semibold text-slate-800">${item.subkon}</td>
+                        <td class="p-3 text-slate-600">${item.speed}</td>
+                        <td class="p-3"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${badgeColor}">${item.klasifikasi}</span></td>
+                        <td class="p-3 text-slate-600 font-medium">${item.risk}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
             });
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "Data_Kecepatan_QAQC.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
     </script>
 </body>
