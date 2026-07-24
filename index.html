@@ -277,45 +277,41 @@
                 
                 console.log("Data diterima dari Spreadsheet:", json); // Cek konsol browser (F12) jika masih kosong
 
-                // 1. Parsing Timbang (Membaca mulai baris ke-1 setelah header)
-                let rowsTimbang = json.timbang || [];
-                globalTimbangData = [];
-                for (let i = 1; i < rowsTimbang.length; i++) {
-                    let row = rowsTimbang[i];
-                    if (!row || row.length === 0) continue;
-                    
-                    // Asumsi Kolom: [0=No, 1=NoTiket, 2=Supplier, 3=Subkon, ... Netto di kolom indeks 10 / atau fleksibel]
-                    // Kita cari kolom angka atau sesuaikan dengan struktur umum
-                    let supplier = row[2] ? String(row[2]).trim() : "Lainnya";
-                    let subkon = row[3] ? String(row[3]).trim() : "";
-                    
-                    // Cari nilai netto (angka terbesar atau pada kolom yang mendekati)
-                    let netto = 0;
-                    for(let c = 4; c < row.length; c++) {
-                        let val = parseFloat(row[c]);
-                        if(!isNaN(val) && val > 0 && val < 100000 && (row[c-1]?.toString().toUpperCase().includes('NETTO') || c === 10 || c === 9)) {
-                            netto = val;
-                            break;
-                        }
-                    }
-                    if(netto === 0) {
-                        // Fallback ambil angka desimal pertama yang wajar sebagai netto
-                        let found = row.find(cell => !isNaN(parseFloat(cell)) && parseFloat(cell) > 0 && parseFloat(cell) < 100);
-                        netto = found ? parseFloat(found) : 0;
-                    }
+                // 1. Parsing Timbang dengan deteksi kolom akurat berdasarkan Header
+let rowsTimbang = json.timbang || [];
+globalTimbangData = [];
 
-                    let rawDate = row[14] || row[13] || row[12] || row[4] || "";
+let headerRow = rowsTimbang[0] || [];
+let idxSupplier = headerRow.findIndex(h => String(h).toUpperCase().includes("SUPPLIER"));
+let idxSubkon = headerRow.findIndex(h => String(h).toUpperCase().includes("SUBKON"));
+let idxNetto = headerRow.findIndex(h => String(h).toUpperCase().includes("NETTO"));
+let idxDate = headerRow.findIndex(h => String(h).toUpperCase().includes("OUT (DATE)") || String(h).toUpperCase().includes("TANGGAL"));
 
-                    if (subkon && netto > 0) {
-                        globalTimbangData.push({
-                            supplier: supplier,
-                            subkon: subkon,
-                            netto: netto,
-                            dateOut: parseUniversalDate(rawDate)
-                        });
-                    }
-                }
+// Fallback jika header tidak ketemu secara persis
+if (idxSupplier === -1) idxSupplier = 2;
+if (idxSubkon === -1) idxSubkon = 3;
+if (idxNetto === -1) idxNetto = 10; // Sesuaikan perkiraan kolom Netto
+if (idxDate === -1) idxDate = 14;
 
+for (let i = 1; i < rowsTimbang.length; i++) {
+    let row = rowsTimbang[i];
+    if (!row || row.length === 0) continue;
+    
+    let supplier = row[idxSupplier] ? String(row[idxSupplier]).trim() : "Lainnya";
+    let subkon = row[idxSubkon] ? String(row[idxSubkon]).trim() : "";
+    let netto = parseFloat(row[idxNetto]) || 0;
+    let rawDate = row[idxDate] || "";
+
+    // Abaikan baris kosong atau teks header nyasar
+    if (subkon && !subkon.toUpperCase().includes("SUBKON") && netto > 0 && netto < 1000) {
+        globalTimbangData.push({
+            supplier: supplier !== "" ? supplier : "Lainnya",
+            subkon: subkon,
+            netto: netto,
+            dateOut: parseUniversalDate(rawDate)
+        });
+    }
+}
                 // 2. Parsing Kecepatan
                 let rowsKecepatan = json.kecepatan || [];
                 rawDataKecepatanTable = rowsKecepatan;
