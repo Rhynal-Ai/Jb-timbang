@@ -42,17 +42,25 @@
         </div>
     </div>
 
-    <!-- Sidebar Navigasi Kiri -->
-    <aside class="w-64 bg-emerald-800 text-white flex flex-col shadow-lg z-20">
-        <div class="p-6 border-b border-emerald-700">
-            <h1 class="text-lg font-bold leading-tight">Dashboard WB QAQC</h1>
-            <p class="text-xs text-emerald-200 mt-1">PT. Citra Lampia Mandiri</p>
+    <!-- Backdrop untuk Sidebar Mobile -->
+    <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 z-30 hidden md:hidden"></div>
+
+    <!-- Sidebar Navigasi (Responsive Pop-up/Drawer) -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-64 bg-emerald-800 text-white flex flex-col shadow-lg z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+        <div class="p-6 border-b border-emerald-700 flex justify-between items-center">
+            <div>
+                <h1 class="text-lg font-bold leading-tight">Dashboard WB QAQC</h1>
+                <p class="text-xs text-emerald-200 mt-1">PT. Citra Lampia Mandiri</p>
+            </div>
+            <button onclick="toggleSidebar()" class="md:hidden text-emerald-200 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
         <nav class="flex-1 p-4 space-y-2">
-            <button onclick="switchPage('timbang')" id="navTimbang" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm">
+            <button onclick="switchPage('timbang'); toggleSidebar();" id="navTimbang" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm">
                 <i class="fa-solid fa-house text-base"></i> Dashboard Utama
             </button>
-            <button onclick="switchPage('kecepatan')" id="navKecepatan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50">
+            <button onclick="switchPage('kecepatan'); toggleSidebar();" id="navKecepatan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50">
                 <i class="fa-solid fa-gauge-high text-base"></i> Kecepatan Rata-Rata
             </button>
         </nav>
@@ -64,15 +72,20 @@
 
     <!-- Konten Utama -->
     <main class="flex-1 flex flex-col h-screen overflow-y-auto">
-        <header class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
-            <h2 id="pageTitle" class="text-xl font-bold text-slate-800">Dashboard Utama</h2>
+        <header class="bg-white border-b border-slate-200 px-6 md:px-8 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-700 hover:text-emerald-700 text-lg">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h2 id="pageTitle" class="text-lg md:text-xl font-bold text-slate-800">Dashboard Utama</h2>
+            </div>
             <div id="loadingIndicator" class="text-xs text-emerald-600 font-semibold flex items-center gap-2 hidden">
                 <i class="fa-solid fa-spinner fa-spin"></i> Memuat data...
             </div>
         </header>
 
         <!-- HALAMAN 1: TIMBANG -->
-        <section id="pageTimbang" class="p-8 space-y-6">
+        <section id="pageTimbang" class="p-4 md:p-8 space-y-6">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-end gap-4">
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Mulai</label>
@@ -99,33 +112,34 @@
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-emerald-600 flex justify-between items-center">
                     <div>
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Netto</p>
-                        <h3 id="statTotalNetto" class="text-3xl font-extrabold text-slate-800 mt-1">0.00 ton</h3>
+                        <h3 id="statTotalNetto" class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-1">0.00 ton</h3>
                     </div>
                     <div class="bg-emerald-50 p-4 rounded-xl text-emerald-600 text-xl"><i class="fa-solid fa-scale-balanced"></i></div>
                 </div>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-blue-500 flex justify-between items-center">
                     <div>
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Jumlah Total Transaksi</p>
-                        <h3 id="statTotalTx" class="text-3xl font-extrabold text-slate-800 mt-1">0</h3>
+                        <h3 id="statTotalTx" class="text-2xl md:text-3xl font-extrabold text-slate-800 mt-1">0</h3>
                     </div>
                     <div class="bg-blue-50 p-4 rounded-xl text-blue-500 text-xl"><i class="fa-solid fa-truck"></i></div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-96 flex flex-col">
+            <!-- GRAFIK UTAMA ATAS-BAWAH AGAR FULL WIDTH & SEMUA NAMA MUNCUL -->
+            <div class="space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 min-h-[450px] flex flex-col">
                     <h3 class="text-sm font-bold text-slate-800 mb-4">Netto Berdasarkan Subkon</h3>
-                    <div class="relative flex-grow"><canvas id="chartSubkon"></canvas></div>
+                    <div class="relative flex-grow w-full h-[400px]"><canvas id="chartSubkon"></canvas></div>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-96 flex flex-col">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 min-h-[400px] flex flex-col">
                     <h3 class="text-sm font-bold text-slate-800 mb-4">Netto Berdasarkan Supplier</h3>
-                    <div class="relative flex-grow"><canvas id="chartSupplier"></canvas></div>
+                    <div class="relative flex-grow w-full h-[350px]"><canvas id="chartSupplier"></canvas></div>
                 </div>
             </div>
         </section>
 
         <!-- HALAMAN 2: KECEPATAN -->
-        <section id="pageKecepatan" class="p-8 space-y-6 hidden">
+        <section id="pageKecepatan" class="p-4 md:p-8 space-y-6 hidden">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-end gap-4">
                 <div class="flex-1 min-w-[180px]">
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Mulai</label>
@@ -188,9 +202,14 @@
                 </div>
             </div>
 
-            <!-- TABEL DETAIL DATA KECEPATAN DENGAN FORMAT TEKS RAPI -->
+            <!-- TABEL DETAIL DATA KECEPATAN + TOMBOL DOWNLOAD -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col space-y-4">
-                <h3 class="text-sm font-bold text-slate-800">Detail Log Kecepatan Unit</h3>
+                <div class="flex justify-between items-center flex-wrap gap-3">
+                    <h3 class="text-sm font-bold text-slate-800">Detail Log Kecepatan Unit</h3>
+                    <button onclick="downloadCSV()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-4 py-2 rounded-xl text-xs transition shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-download"></i> Download Detail Data (CSV)
+                    </button>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
@@ -212,20 +231,26 @@
     </main>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwvT342p_19eEuS5cCxz6i9mMhJjBqKx8OKCRPZWTF88cSMFD4x_VQ6Ogyi0K8CbEYClQ/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyShlDNp56ji-AG4XSx5cBTqM8yf4jQ7yQtJNjPJOVZJWNPOi_6_tWacGXrp9y-cz67Wg/exec";
 
         let c1, c2, c3, c4, c5;
         let globalTimbangData = [];
         let globalKecepatanData = [];
         let rawDataKecepatanTable = [];
+        let filteredSpeedExportData = [];
 
-        // Fungsi Login Sederhana
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            sidebar.classList.toggle('-translate-x-full');
+            backdrop.classList.toggle('hidden');
+        }
+
         function handleLogin(event) {
             event.preventDefault();
             let u = document.getElementById('loginUser').value.trim();
             let p = document.getElementById('loginPass').value.trim();
 
-            // Ubah kredensial sesuai kebutuhan Anda
             if (u === 'admin' && p === 'clm2026') {
                 localStorage.setItem('isLoggedIn', 'true');
                 document.getElementById('loginModal').classList.add('hidden');
@@ -275,7 +300,6 @@
                 let response = await fetch(WEB_APP_URL);
                 let json = await response.json();
 
-                // 1. Parsing Timbang
                 let rowsTimbang = json.timbang || [];
                 globalTimbangData = [];
                 let headerTimbangIdx = rowsTimbang.findIndex(r => r && r.some(cell => String(cell).toUpperCase().includes("NETTO")));
@@ -299,7 +323,6 @@
                     }
                 }
 
-                // 2. Parsing Kecepatan
                 let rowsKecepatan = json.kecepatan || [];
                 globalKecepatanData = [];
                 rawDataKecepatanTable = [];
@@ -312,8 +335,8 @@
 
                     let subkon = row[0] ? String(row[0]).trim() : "";
                     let rawDateIn = row[3] || ""; 
-                    let speedVal = parseFloat(row[5]); // Kolom F: Kecepatan
-                    let rawKlasifikasi = row[6] ? String(row[6]).trim() : ""; // Kolom G
+                    let speedVal = parseFloat(row[5]); 
+                    let rawKlasifikasi = row[6] ? String(row[6]).trim() : ""; 
 
                     let klasifikasi = "STANDAR";
                     let valStr = String(rawKlasifikasi).toUpperCase();
@@ -337,7 +360,6 @@
                     if (subkon && !subkon.toUpperCase().includes("SUBKON") && !subkon.toUpperCase().includes("KLASIFIKASI")) {
                         let formattedDate = parseUniversalDate(rawDateIn);
                         
-                        // Pemetaan Teks Keterangan Detail Data
                         let textKlasifikasi = klasifikasi;
                         let textRisk = "Risiko Rendah (Aman)";
                         if (klasifikasi === "OVER SPEED") {
@@ -361,7 +383,6 @@
 
                 populateDropdowns();
 
-                // Set Tanggal Otomatis
                 if (globalTimbangData.length > 0) {
                     let datesTimbang = globalTimbangData.map(i => i.dateOut).filter(d => d);
                     if (datesTimbang.length > 0) {
@@ -445,7 +466,7 @@
             let sSubkon = document.getElementById('speedSubkon').value;
             let sKlasifikasi = document.getElementById('speedKlasifikasi').value;
 
-            let filtered = globalKecepatanData.filter(item => {
+            filteredSpeedExportData = globalKecepatanData.filter(item => {
                 let matchDate = true;
                 if (item.date) {
                     if (sStart && sEnd) matchDate = (item.date >= sStart && item.date <= sEnd);
@@ -457,8 +478,8 @@
                 return matchDate && matchSubkon && matchKlasifikasi;
             });
 
-            renderDashboardKecepatan(filtered);
-            renderTabelKecepatan(filtered);
+            renderDashboardKecepatan(filteredSpeedExportData);
+            renderTabelKecepatan(filteredSpeedExportData);
         }
 
         function renderDashboardTimbang(data) {
@@ -471,7 +492,16 @@
             c1 = new Chart(document.getElementById('chartSubkon'), {
                 type: 'bar', plugins: [ChartDataLabels],
                 data: { labels: Object.keys(subMap), datasets: [{ label: 'Netto (Ton)', data: Object.values(subMap), backgroundColor: '#059669' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor: 'end', align: 'top', formatter: (v) => v.toLocaleString('id-ID', { maximumFractionDigits: 0 }), font: { size: 10, weight: 'bold' }, color: '#334155' } }, scales: { y: { grace: '10%' } } }
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { 
+                        datalabels: { anchor: 'end', align: 'top', formatter: (v) => v.toLocaleString('id-ID', { maximumFractionDigits: 0 }), font: { size: 10, weight: 'bold' }, color: '#334155' } 
+                    }, 
+                    scales: { 
+                        x: { ticks: { font: { size: 11 }, autoSkip: false, maxRotation: 45, minRotation: 45 } },
+                        y: { grace: '15%' } 
+                    } 
+                }
             });
 
             let supMap = {}; data.forEach(i => supMap[i.supplier] = (supMap[i.supplier] || 0) + i.netto);
@@ -479,7 +509,16 @@
             c2 = new Chart(document.getElementById('chartSupplier'), {
                 type: 'bar', plugins: [ChartDataLabels],
                 data: { labels: Object.keys(supMap), datasets: [{ label: 'Netto (Ton)', data: Object.values(supMap), backgroundColor: '#3b82f6' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor: 'end', align: 'top', formatter: (v) => v.toLocaleString('id-ID', { maximumFractionDigits: 0 }), font: { size: 10, weight: 'bold' }, color: '#334155' } }, scales: { y: { grace: '10%' } } }
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { 
+                        datalabels: { anchor: 'end', align: 'top', formatter: (v) => v.toLocaleString('id-ID', { maximumFractionDigits: 0 }), font: { size: 10, weight: 'bold' }, color: '#334155' } 
+                    }, 
+                    scales: { 
+                        x: { ticks: { font: { size: 11 }, autoSkip: false, maxRotation: 20, minRotation: 0 } },
+                        y: { grace: '15%' } 
+                    } 
+                }
             });
         }
 
@@ -554,7 +593,6 @@
                 return;
             }
 
-            // Batasi tampilan maksimal 50 baris agar performa tetap ringan
             let displayData = data.slice(0, 50);
 
             displayData.forEach(item => {
@@ -573,6 +611,29 @@
                 `;
                 tbody.innerHTML += row;
             });
+        }
+
+        function downloadCSV() {
+            if (!filteredSpeedExportData || filteredSpeedExportData.length === 0) {
+                alert("Tidak ada data untuk diunduh!");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Tanggal,Subkon,Kecepatan (Km/Jam),Klasifikasi,Risk-Based Assessment\r\n";
+
+            filteredSpeedExportData.forEach(item => {
+                let row = `"${item.date}","${item.subkon}","${item.speed}","${item.klasifikasi}","${item.risk}"`;
+                csvContent += row + "\r\n";
+            });
+
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "detail_kecepatan_unit.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
