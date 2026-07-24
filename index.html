@@ -4,28 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard WB & QAQC - PT. Citra Lampia Mandiri</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js & Plugin Datalabels -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
     </style>
 </head>
-<body class="text-slate-800 antialiased flex h-screen overflow-hidden">
+<body class="text-slate-800 antialiased flex h-screen overflow-hidden relative">
+
+    <!-- 1. HALAMAN LOGIN -->
+    <div id="loginOverlay" class="fixed inset-0 z-50 bg-slate-900 bg-opacity-70 flex items-center justify-center transition-opacity duration-300">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md mx-4">
+            <div class="text-center mb-8">
+                <div class="inline-block p-4 bg-emerald-100 rounded-full text-emerald-600 mb-3 text-3xl">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-emerald-800">EFO QAQC</h2>
+                <p class="text-slate-500 mt-2 text-sm">Silakan login untuk mengakses sistem dashboard</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Username</label>
+                    <input type="text" id="loginUser" placeholder="Masukkan username" class="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                    <input type="password" id="loginPass" placeholder="Masukkan password" class="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                </div>
+                <button onclick="prosesLogin()" class="w-full bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-emerald-700 transition-colors mt-2 shadow-lg shadow-emerald-600/30">
+                    MASUK DASHBOARD
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Sidebar Navigasi Kiri -->
-    <aside class="w-64 bg-emerald-800 text-white flex flex-col shadow-lg z-20">
+    <aside id="sidebar" class="w-64 bg-emerald-800 text-white flex flex-col shadow-lg z-40 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 h-full">
         <div class="p-6 border-b border-emerald-700">
             <h1 class="text-lg font-bold leading-tight">Dashboard WB QAQC</h1>
             <p class="text-xs text-emerald-200 mt-1">PT. Citra Lampia Mandiri</p>
         </div>
         <nav class="flex-1 p-4 space-y-2">
-            <button onclick="switchPage('timbang')" id="navTimbang" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm">
+            <button onclick="switchPage('timbang'); tutupSidebarDiHP();" id="navTimbang" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm text-left">
                 <i class="fa-solid fa-house text-base"></i> Dashboard Utama
             </button>
-            <button onclick="switchPage('kecepatan')" id="navKecepatan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50">
+            <button onclick="switchPage('kecepatan'); tutupSidebarDiHP();" id="navKecepatan" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50 text-left">
                 <i class="fa-solid fa-gauge-high text-base"></i> Kecepatan Rata-Rata
             </button>
         </nav>
@@ -36,15 +65,20 @@
 
     <!-- Konten Utama -->
     <main class="flex-1 flex flex-col h-screen overflow-y-auto">
-        <header class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
-            <h2 id="pageTitle" class="text-xl font-bold text-slate-800">Dashboard Utama</h2>
+        <header class="bg-white border-b border-slate-200 px-6 md:px-8 py-4 flex justify-between items-center sticky top-0 z-30 shadow-sm">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="text-emerald-800 text-xl md:hidden focus:outline-none">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h2 id="pageTitle" class="text-xl font-bold text-slate-800">Dashboard Utama</h2>
+            </div>
             <div id="loadingIndicator" class="text-xs text-emerald-600 font-semibold flex items-center gap-2 hidden">
                 <i class="fa-solid fa-spinner fa-spin"></i> Memuat data...
             </div>
         </header>
 
         <!-- HALAMAN 1: TIMBANG -->
-        <section id="pageTimbang" class="p-8 space-y-6">
+        <section id="pageTimbang" class="p-4 md:p-8 space-y-6">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-end gap-4">
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Mulai</label>
@@ -97,8 +131,7 @@
         </section>
 
         <!-- HALAMAN 2: KECEPATAN -->
-        <section id="pageKecepatan" class="p-8 space-y-6 hidden">
-            <!-- Filter Panel Kecepatan Lengkap dengan Klasifikasi -->
+        <section id="pageKecepatan" class="p-4 md:p-8 space-y-6 hidden">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-end gap-4">
                 <div class="flex-1 min-w-[180px]">
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Mulai</label>
@@ -160,15 +193,59 @@
                     <div class="relative flex-grow"><canvas id="chartPieGlobal"></canvas></div>
                 </div>
             </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                    <h3 class="font-bold text-sm text-slate-800">Detail Data Kecepatan Unit</h3>
+                    <button onclick="downloadDataCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-xl text-sm transition-colors flex items-center gap-2 shadow-sm">
+                        <i class="fas fa-file-excel"></i> Download Data (CSV)
+                    </button>
+                </div>
+                <div class="overflow-x-auto h-96 border border-slate-200 rounded-xl">
+                    <table class="w-full text-sm text-left whitespace-nowrap">
+                        <thead class="bg-slate-100 sticky top-0 shadow-sm" id="tableHeader"></thead>
+                        <tbody id="tableBody" class="divide-y divide-slate-200"></tbody>
+                    </table>
+                </div>
+            </div>
         </section>
     </main>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwBpUNBqo7l4iHza0QYKnazhTw6KAICxnOB4rkPNY11KvC7u-x4PV9mp4IhwZpTf-KYtw/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwC3OTdHG2rz4TCGBDUl9HchBs3PsgQHnRlNxN4ES9Lm0ljaef06fiPQCtzSjDWCTO7Eg/exec";
 
         let c1, c2, c3, c4, c5;
         let globalTimbangData = [];
         let globalKecepatanData = [];
+        let rawDataKecepatanTable = [];
+
+        function prosesLogin() {
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            
+            if (user === 'EFOQAQC' && pass === 'EFO2026') {
+                const overlay = document.getElementById('loginOverlay');
+                overlay.style.opacity = '0';
+                setTimeout(() => { overlay.style.display = 'none'; }, 300);
+                loadDataFromSpreadsheet();
+            } else {
+                alert('Username atau Password salah!');
+            }
+        }
+
+        document.getElementById('loginPass').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') prosesLogin();
+        });
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        }
+
+        function tutupSidebarDiHP() {
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+            }
+        }
 
         function switchPage(page) {
             const btnTimbang = document.getElementById('navTimbang');
@@ -178,14 +255,14 @@
             const pageTitle = document.getElementById('pageTitle');
 
             if (page === 'timbang') {
-                btnTimbang.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm";
-                btnKecepatan.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50";
+                btnTimbang.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm text-left";
+                btnKecepatan.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50 text-left";
                 secTimbang.classList.remove('hidden');
                 secKecepatan.classList.add('hidden');
                 pageTitle.innerText = "Dashboard Utama";
             } else {
-                btnKecepatan.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm";
-                btnTimbang.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50";
+                btnKecepatan.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition bg-emerald-900 text-white shadow-sm text-left";
+                btnTimbang.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-emerald-100 hover:bg-emerald-700/50 text-left";
                 secKecepatan.classList.remove('hidden');
                 secTimbang.classList.add('hidden');
                 pageTitle.innerText = "Kecepatan Rata-Rata Unit";
@@ -197,45 +274,60 @@
             try {
                 let response = await fetch(WEB_APP_URL);
                 let json = await response.json();
+                
+                console.log("Data diterima dari Spreadsheet:", json); // Cek konsol browser (F12) jika masih kosong
 
-                // 1. Parsing Timbang
+                // 1. Parsing Timbang (Membaca mulai baris ke-1 setelah header)
                 let rowsTimbang = json.timbang || [];
                 globalTimbangData = [];
-                let headerTimbangIdx = rowsTimbang.findIndex(r => r && r.some(cell => String(cell).toUpperCase().includes("NETTO")));
-                if (headerTimbangIdx === -1) headerTimbangIdx = 5;
-
-                for (let i = headerTimbangIdx + 1; i < rowsTimbang.length; i++) {
+                for (let i = 1; i < rowsTimbang.length; i++) {
                     let row = rowsTimbang[i];
-                    if (!row || row.length < 12) continue;
+                    if (!row || row.length === 0) continue;
+                    
+                    // Asumsi Kolom: [0=No, 1=NoTiket, 2=Supplier, 3=Subkon, ... Netto di kolom indeks 10 / atau fleksibel]
+                    // Kita cari kolom angka atau sesuaikan dengan struktur umum
                     let supplier = row[2] ? String(row[2]).trim() : "Lainnya";
                     let subkon = row[3] ? String(row[3]).trim() : "";
-                    let netto = parseFloat(row[10]);
-                    let rawDateOut = row[14] || row[13] || row[12] || "";
+                    
+                    // Cari nilai netto (angka terbesar atau pada kolom yang mendekati)
+                    let netto = 0;
+                    for(let c = 4; c < row.length; c++) {
+                        let val = parseFloat(row[c]);
+                        if(!isNaN(val) && val > 0 && val < 100000 && (row[c-1]?.toString().toUpperCase().includes('NETTO') || c === 10 || c === 9)) {
+                            netto = val;
+                            break;
+                        }
+                    }
+                    if(netto === 0) {
+                        // Fallback ambil angka desimal pertama yang wajar sebagai netto
+                        let found = row.find(cell => !isNaN(parseFloat(cell)) && parseFloat(cell) > 0 && parseFloat(cell) < 100);
+                        netto = found ? parseFloat(found) : 0;
+                    }
 
-                    if (subkon && !isNaN(netto) && netto > 0) {
+                    let rawDate = row[14] || row[13] || row[12] || row[4] || "";
+
+                    if (subkon && netto > 0) {
                         globalTimbangData.push({
                             supplier: supplier,
                             subkon: subkon,
                             netto: netto,
-                            dateOut: parseUniversalDate(rawDateOut)
+                            dateOut: parseUniversalDate(rawDate)
                         });
                     }
                 }
 
-                // 2. Parsing Kecepatan (Kombinasi Kolom G & Angka Kecepatan Kolom F)
+                // 2. Parsing Kecepatan
                 let rowsKecepatan = json.kecepatan || [];
+                rawDataKecepatanTable = rowsKecepatan;
                 globalKecepatanData = [];
-                let headerSpeedIdx = rowsKecepatan.findIndex(r => r && r.some(cell => String(cell).toUpperCase().includes("SUBKON")));
-                if (headerSpeedIdx === -1) headerSpeedIdx = 6;
-
-                for (let i = headerSpeedIdx + 1; i < rowsKecepatan.length; i++) {
+                for (let i = 1; i < rowsKecepatan.length; i++) {
                     let row = rowsKecepatan[i];
                     if (!row || row.length === 0) continue;
 
                     let subkon = row[0] ? String(row[0]).trim() : "";
                     let rawDateIn = row[3] || ""; 
-                    let speedVal = parseFloat(row[5]); // Kolom F: Kecepatan (Km/Jam)
-                    let rawKlasifikasi = row[6] ? String(row[6]).trim() : ""; // Kolom G
+                    let speedVal = parseFloat(row[5]) || 0; 
+                    let rawKlasifikasi = row[6] ? String(row[6]).trim() : ""; 
 
                     let klasifikasi = "STANDAR";
                     let valStr = String(rawKlasifikasi).toUpperCase();
@@ -244,20 +336,13 @@
                         klasifikasi = "UNDER SPEED";
                     } else if (valStr.includes("OVER") || valStr.includes("CEPAT") || valStr.includes("TINGGI")) {
                         klasifikasi = "OVER SPEED";
-                    } else if (valStr.includes("STANDAR")) {
-                        klasifikasi = "STANDAR";
-                    } else if (!isNaN(speedVal)) {
-                        // Logika Fallback Standar Kecepatan dari tabel Anda (<18 Under, 18-23.2 Standar, >23.2 Over)
-                        if (speedVal < 18) {
-                            klasifikasi = "UNDER SPEED";
-                        } else if (speedVal > 23.2) {
-                            klasifikasi = "OVER SPEED";
-                        } else {
-                            klasifikasi = "STANDAR";
-                        }
+                    } else if (speedVal > 0) {
+                        if (speedVal < 18) klasifikasi = "UNDER SPEED";
+                        else if (speedVal > 23.2) klasifikasi = "OVER SPEED";
+                        else klasifikasi = "STANDAR";
                     }
 
-                    if (subkon && !subkon.toUpperCase().includes("SUBKON") && !subkon.toUpperCase().includes("KLASIFIKASI")) {
+                    if (subkon && !subkon.toUpperCase().includes("SUBKON")) {
                         globalKecepatanData.push({
                             subkon: subkon,
                             date: parseUniversalDate(rawDateIn),
@@ -269,6 +354,7 @@
                 populateDropdowns();
                 applyTimbangFilter();
                 applySpeedFilter();
+                renderTabelKecepatan(rowsKecepatan);
 
             } catch (error) {
                 console.error("Gagal memuat data:", error);
@@ -283,17 +369,11 @@
                 let d = new Date(Math.round((dateVal - 25569) * 86400 * 1000));
                 return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
             }
-            let strVal = String(dateVal).trim();
-            const months = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
-            let parts = strVal.split(/[\/\-\s]/);
-            if (parts.length === 3 && months[parts[1].toLowerCase()]) {
-                return `${parts[2].length === 2 ? '20'+parts[2] : parts[2]}-${months[parts[1].toLowerCase()]}-${parts[0].padStart(2, '0')}`;
-            }
             let d = new Date(dateVal);
             if (!isNaN(d.getTime())) {
                 return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             }
-            return strVal.substring(0, 10);
+            return String(dateVal).substring(0, 10);
         }
 
         function populateDropdowns() {
@@ -315,11 +395,9 @@
 
             let filtered = globalTimbangData.filter(item => {
                 let matchDate = true;
-                if (item.dateOut) {
-                    if (tStart && tEnd) matchDate = (item.dateOut >= tStart && item.dateOut <= tEnd);
-                    else if (tStart) matchDate = (item.dateOut >= tStart);
-                    else if (tEnd) matchDate = (item.dateOut <= tEnd);
-                }
+                if (item.dateOut && tStart && tEnd) matchDate = (item.dateOut >= tStart && item.dateOut <= tEnd);
+                else if (item.dateOut && tStart) matchDate = (item.dateOut >= tStart);
+                else if (item.dateOut && tEnd) matchDate = (item.dateOut <= tEnd);
                 return matchDate && (tSubkon ? item.subkon === tSubkon : true);
             });
 
@@ -334,11 +412,9 @@
 
             let filtered = globalKecepatanData.filter(item => {
                 let matchDate = true;
-                if (item.date) {
-                    if (sStart && sEnd) matchDate = (item.date >= sStart && item.date <= sEnd);
-                    else if (sStart) matchDate = (item.date >= sStart);
-                    else if (sEnd) matchDate = (item.date <= sEnd);
-                }
+                if (item.date && sStart && sEnd) matchDate = (item.date >= sStart && item.date <= sEnd);
+                else if (item.date && sStart) matchDate = (item.date >= sStart);
+                else if (item.date && sEnd) matchDate = (item.date <= sEnd);
                 let matchSubkon = sSubkon ? (item.subkon === sSubkon) : true;
                 let matchKlasifikasi = sKlasifikasi ? (item.klasifikasi === sKlasifikasi) : true;
                 return matchDate && matchSubkon && matchKlasifikasi;
@@ -431,7 +507,54 @@
             });
         }
 
-        window.onload = loadDataFromSpreadsheet;
+        function renderTabelKecepatan(dataArray) {
+            const thead = document.getElementById('tableHeader');
+            const tbody = document.getElementById('tableBody');
+            if(!thead || !tbody) return;
+            thead.innerHTML = ''; tbody.innerHTML = '';
+
+            if(dataArray.length === 0) return;
+
+            let trHead = document.createElement('tr');
+            dataArray[0].forEach(h => {
+                let th = document.createElement('th');
+                th.className = "px-4 py-3 font-semibold text-slate-700 text-xs uppercase";
+                th.textContent = h;
+                trHead.appendChild(th);
+            });
+            thead.appendChild(trHead);
+
+            for (let i = 1; i < dataArray.length; i++) {
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50";
+                dataArray[i].forEach(cell => {
+                    let td = document.createElement('td');
+                    td.className = "px-4 py-2 text-slate-600 text-xs";
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            }
+        }
+
+        function downloadDataCSV() {
+            if (rawDataKecepatanTable.length === 0) {
+                alert("Data belum tersedia.");
+                return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,";
+            rawDataKecepatanTable.forEach(row => {
+                let rowStr = row.map(item => `"${item}"`).join(",");
+                csvContent += rowStr + "\r\n";
+            });
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Data_Kecepatan_QAQC.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     </script>
 </body>
 </html>
