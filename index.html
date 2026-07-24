@@ -274,75 +274,88 @@
             try {
                 let response = await fetch(WEB_APP_URL);
                 let json = await response.json();
+
+                // 1. Parsing Timbang dengan Deteksi Header Akurat
+                let rowsTimbang = json.timbang || [];
+                globalTimbangData = [];
                 
-                console.log("Data diterima dari Spreadsheet:", json); // Cek konsol browser (F12) jika masih kosong
+                let headTimbang = rowsTimbang[0] || [];
+                let idxSup = headTimbang.findIndex(h => String(h).toUpperCase().includes("SUPPLIER"));
+                let idxSub = headTimbang.findIndex(h => String(h).toUpperCase().includes("SUBKON"));
+                let idxNet = headTimbang.findIndex(h => String(h).toUpperCase().includes("NETTO"));
+                let idxDt  = headTimbang.findIndex(h => String(h).toUpperCase().includes("OUT (DATE)") || String(h).toUpperCase().includes("TANGGAL"));
 
-                // 1. Parsing Timbang dengan deteksi kolom akurat berdasarkan Header
-let rowsTimbang = json.timbang || [];
-globalTimbangData = [];
+                if (idxSup === -1) idxSup = 2;
+                if (idxSub === -1) idxSub = 3;
+                if (idxNet === -1) idxNet = 9; 
+                if (idxDt === -1) idxDt = 14;
 
-let headerRow = rowsTimbang[0] || [];
-let idxSupplier = headerRow.findIndex(h => String(h).toUpperCase().includes("SUPPLIER"));
-let idxSubkon = headerRow.findIndex(h => String(h).toUpperCase().includes("SUBKON"));
-let idxNetto = headerRow.findIndex(h => String(h).toUpperCase().includes("NETTO"));
-let idxDate = headerRow.findIndex(h => String(h).toUpperCase().includes("OUT (DATE)") || String(h).toUpperCase().includes("TANGGAL"));
+                for (let i = 1; i < rowsTimbang.length; i++) {
+                    let row = rowsTimbang[i];
+                    if (!row || row.length === 0) continue;
+                    
+                    let supplier = row[idxSup] ? String(row[idxSup]).trim() : "Lainnya";
+                    let subkon = row[idxSub] ? String(row[idxSub]).trim() : "";
+                    let netto = parseFloat(row[idxNet]) || 0;
+                    let rawDate = row[idxDt] || "";
 
-// Fallback jika header tidak ketemu secara persis
-if (idxSupplier === -1) idxSupplier = 2;
-if (idxSubkon === -1) idxSubkon = 3;
-if (idxNetto === -1) idxNetto = 10; // Sesuaikan perkiraan kolom Netto
-if (idxDate === -1) idxDate = 14;
+                    if (subkon && !subkon.toUpperCase().includes("SUBKON") && netto > 0 && netto < 1000) {
+                        globalTimbangData.push({
+                            supplier: supplier !== "" ? supplier : "Lainnya",
+                            subkon: subkon,
+                            netto: netto,
+                            dateOut: parseUniversalDate(rawDate)
+                        });
+                    }
+                }
 
-for (let i = 1; i < rowsTimbang.length; i++) {
-    let row = rowsTimbang[i];
-    if (!row || row.length === 0) continue;
-    
-    let supplier = row[idxSupplier] ? String(row[idxSupplier]).trim() : "Lainnya";
-    let subkon = row[idxSubkon] ? String(row[idxSubkon]).trim() : "";
-    let netto = parseFloat(row[idxNetto]) || 0;
-    let rawDate = row[idxDate] || "";
-
-    // Abaikan baris kosong atau teks header nyasar
-    if (subkon && !subkon.toUpperCase().includes("SUBKON") && netto > 0 && netto < 1000) {
-        globalTimbangData.push({
-            supplier: supplier !== "" ? supplier : "Lainnya",
-            subkon: subkon,
-            netto: netto,
-            dateOut: parseUniversalDate(rawDate)
-        });
-    }
-}
-                // 2. Parsing Kecepatan
+                // 2. Parsing Kecepatan & Format Tabel Detail
                 let rowsKecepatan = json.kecepatan || [];
-                rawDataKecepatanTable = rowsKecepatan;
                 globalKecepatanData = [];
+                
+                let headSpeed = rowsKecepatan[0] || [];
+                let sSub = headSpeed.findIndex(h => String(h).toUpperCase().includes("SUBKON"));
+                let sDate = headSpeed.findIndex(h => String(h).toUpperCase().includes("IN (DATE)") || String(h).toUpperCase().includes("TANGGAL"));
+                let sVal = headSpeed.findIndex(h => String(h).toUpperCase().includes("KECEPATAN"));
+                let sKlas = headSpeed.findIndex(h => String(h).toUpperCase().includes("KLASIFIKASI"));
+                let sRisk = headSpeed.findIndex(h => String(h).toUpperCase().includes("RISK"));
+
+                if (sSub === -1) sSub = 0;
+                if (sDate === -1) sDate = 3;
+                if (sVal === -1) sVal = 5;
+                if (sKlas === -1) sKlas = 6;
+                if (sRisk === -1) sRisk = 7;
+
+                // Salin untuk tabel dengan konversi angka ke teks agar mudah dibaca
+                rawDataKecepatanTable = [];
+                if (rowsKecepatan.length > 0) {
+                    rawDataKecepatanTable.push(rowsKecepatan[0]); // Header
+                }
+
                 for (let i = 1; i < rowsKecepatan.length; i++) {
-                    let row = rowsKecepatan[i];
+                    let row = [...rowsKecepatan[i]]; // Salin baris
                     if (!row || row.length === 0) continue;
 
-                    let subkon = row[0] ? String(row[0]).trim() : "";
-                    let rawDateIn = row[3] || ""; 
-                    let speedVal = parseFloat(row[5]) || 0; 
-                    let rawKlasifikasi = row[6] ? String(row[6]).trim() : ""; 
+                    let subkon = row[sSub] ? String(row[sSub]).trim() : "";
+                    let rawDateIn = row[sDate] || "";
+                    let speedVal = parseFloat(row[sVal]) || 0;
+                    let rawKlas = row[sKlas];
+                    let rawRisk = row[sRisk];
 
-                    let klasifikasi = "STANDAR";
-                    let valStr = String(rawKlasifikasi).toUpperCase();
+                    // Fungsi konversi angka/teks klasifikasi
+                    let klasifikasiText = mapKlasifikasi(rawKlas, speedVal);
+                    let riskText = mapRiskBased(rawRisk);
 
-                    if (valStr.includes("UNDER") || valStr.includes("LAMBAT")) {
-                        klasifikasi = "UNDER SPEED";
-                    } else if (valStr.includes("OVER") || valStr.includes("CEPAT") || valStr.includes("TINGGI")) {
-                        klasifikasi = "OVER SPEED";
-                    } else if (speedVal > 0) {
-                        if (speedVal < 18) klasifikasi = "UNDER SPEED";
-                        else if (speedVal > 23.2) klasifikasi = "OVER SPEED";
-                        else klasifikasi = "STANDAR";
-                    }
+                    // Masukkan kembali teks hasil konversi ke baris tabel agar tampil rapi
+                    if (sKlas !== -1) row[sKlas] = klasifikasiText;
+                    if (sRisk !== -1) row[sRisk] = riskText;
+                    rawDataKecepatanTable.push(row);
 
                     if (subkon && !subkon.toUpperCase().includes("SUBKON")) {
                         globalKecepatanData.push({
                             subkon: subkon,
                             date: parseUniversalDate(rawDateIn),
-                            klasifikasi: klasifikasi
+                            klasifikasi: klasifikasiText
                         });
                     }
                 }
@@ -350,13 +363,36 @@ for (let i = 1; i < rowsTimbang.length; i++) {
                 populateDropdowns();
                 applyTimbangFilter();
                 applySpeedFilter();
-                renderTabelKecepatan(rowsKecepatan);
+                renderTabelKecepatan(rawDataKecepatanTable);
 
             } catch (error) {
                 console.error("Gagal memuat data:", error);
             } finally {
                 document.getElementById('loadingIndicator').classList.add('hidden');
             }
+        }
+
+        function mapKlasifikasi(val, speed) {
+            let s = String(val).trim().toUpperCase();
+            if (s === "1" || s.includes("OVER") || s.includes("TINGGI")) return "OVER SPEED";
+            if (s === "0" || s === "2" || s.includes("UNDER") || s.includes("LAMBAT")) return "UNDER SPEED";
+            if (s === "STANDAR" || s === "NORMAL") return "STANDAR";
+            
+            // Logika otomatis berdasarkan nilai kecepatan jika berupa angka
+            if (!isNaN(parseFloat(val)) && parseFloat(val) === 0 && speed > 0) {
+                if (speed < 18) return "UNDER SPEED";
+                if (speed > 23.2) return "OVER SPEED";
+                return "STANDAR";
+            }
+            return val || "STANDAR";
+        }
+
+        function mapRiskBased(val) {
+            let s = String(val).trim().toUpperCase();
+            if (s === "1" || s.includes("HIGH") || s.includes("TINGGI")) return "HIGH RISK";
+            if (s === "0" || s === "LOW" || s.includes("RENDAH")) return "LOW RISK";
+            if (s === "2" || s.includes("MEDIUM") || s.includes("SEDANG")) return "MEDIUM RISK";
+            return val || "LOW RISK";
         }
 
         function parseUniversalDate(dateVal) {
