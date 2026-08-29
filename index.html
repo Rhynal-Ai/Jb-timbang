@@ -387,7 +387,9 @@ async function loadDataFromSpreadsheet() {
                 klasifikasi = "UNDER SPEED";
             } else if (valStr.includes("OVER")) {
                 klasifikasi = "OVER SPEED";
-            } else if (!isNaN(speedVal)) {
+            } else if (isNaN(speedVal)) {
+                klasifikasi = "UNDER SPEED"; // Baris nilai "-" atau kosong akan terbaca Under Speed
+            } else {
                 let absSpeed = Math.abs(speedVal);
                 if (absSpeed < 18) {
                     klasifikasi = "UNDER SPEED";
