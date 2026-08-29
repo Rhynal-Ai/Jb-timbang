@@ -517,7 +517,17 @@ function parseUniversalDate(dateVal) {
 }
 
 function populateDropdowns() {
-    let subkonTimbang = [...new Set(globalTimbangData.map(i => i.subkon))].sort();
+    let availableTimbangData = globalTimbangData;
+    let availableSpeedData = globalKecepatanData;
+
+    // Jika yang login adalah supplier, batasi pilihan subkon hanya yang terkait dengan supplier tersebut
+    if (currentUserType === 'supplier') {
+        availableTimbangData = globalTimbangData.filter(i => cleanStr(i.supplier) === cleanStr(currentEntityName));
+        let allowedSubkonsForSupplier = new Set(availableTimbangData.map(i => i.subkon));
+        availableSpeedData = globalKecepatanData.filter(i => allowedSubkonsForSupplier.has(i.subkon));
+    }
+
+    let subkonTimbang = [...new Set(availableTimbangData.map(i => i.subkon))].sort();
     let selectTimbang = document.getElementById('timbangSubkon');
     selectTimbang.innerHTML = '<option value="">Semua Subkon</option>';
     subkonTimbang.forEach(s => selectTimbang.add(new Option(s, s)));
@@ -527,7 +537,7 @@ function populateDropdowns() {
     selectSupplier.innerHTML = '<option value="">Semua Supplier</option>';
     supplierTimbang.forEach(s => selectSupplier.add(new Option(s, s)));
     
-    let subkonKecepatan = [...new Set(globalKecepatanData.map(i => i.subkon))].sort();
+    let subkonKecepatan = [...new Set(availableSpeedData.map(i => i.subkon))].sort();
     let selectKecepatan = document.getElementById('speedSubkon');
     selectKecepatan.innerHTML = '<option value="">Semua Subkon</option>';
     subkonKecepatan.forEach(s => selectKecepatan.add(new Option(s, s)));
@@ -536,7 +546,7 @@ function populateDropdowns() {
 function applyTimbangFilter() {
     let tStart = document.getElementById('timbangStart').value;
     let tEnd = document.getElementById('timbangEnd').value;
-    let tSubkon = currentUserType === 'admin' ? document.getElementById('timbangSubkon').value : (currentUserType === 'subkon' ? currentEntityName : '');
+    let tSubkon = document.getElementById('timbangSubkon').value;
     let tSupplier = currentUserType === 'admin' ? document.getElementById('timbangSupplier').value : (currentUserType === 'supplier' ? currentEntityName : '');
     
     filteredTimbangExportData = globalTimbangData.filter(item => {
@@ -556,10 +566,20 @@ function applyTimbangFilter() {
 function applySpeedFilter() {
     let sStart = document.getElementById('speedStart').value;
     let sEnd = document.getElementById('speedEnd').value;
-    let sSubkon = currentUserType === 'admin' ? document.getElementById('speedSubkon').value : (currentUserType === 'subkon' ? currentEntityName : '');
+    let sSubkon = document.getElementById('speedSubkon').value;
     let sKlasifikasi = document.getElementById('speedKlasifikasi').value;
     
+    // Jika supplier login, pastikan data kecepatan yang difilter juga dibatasi hanya untuk subkon yang berelasi dengan supplier tersebut
+    let allowedSubkonsForSupplier = null;
+    if (currentUserType === 'supplier') {
+        let supplierTimbangRows = globalTimbangData.filter(i => cleanStr(i.supplier) === cleanStr(currentEntityName));
+        allowedSubkonsForSupplier = new Set(supplierTimbangRows.map(i => i.subkon));
+    }
+
     filteredSpeedExportData = globalKecepatanData.filter(item => {
+        if (currentUserType === 'supplier' && allowedSubkonsForSupplier && !allowedSubkonsForSupplier.has(item.subkon)) {
+            return false;
+        }
         let matchDate = true;
         if (item.date) {
             if (sStart && sEnd) matchDate = (item.date >= sStart && item.date <= sEnd);
