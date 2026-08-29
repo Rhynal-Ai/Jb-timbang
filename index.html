@@ -162,11 +162,16 @@ let filteredTimbangExportData = [];
 let globalKecepatanData = [];
 let rawDataKecepatanTable = [];
 let filteredSpeedExportData = [];
-let cachedSubkons = JSON.parse(localStorage.getItem('cachedSubkons') || '[]');
+let cachedSubkons = JSON.parse(localStorage.getItem('cachedSubkons') || '["PT. MPM", "PT. BUMI JASA UTAMA", "PT. BUMI MINERAL LAMPIA"]');
 let cachedSuppliers = JSON.parse(localStorage.getItem('cachedSuppliers') || '[]');
-let currentRole = 'admin'; // 'admin', 'subkon:NAMA', atau 'supplier:NAMA'
-let currentUserType = 'admin'; // 'admin', 'subkon', 'supplier'
+let currentRole = 'admin'; 
+let currentUserType = 'admin'; 
 let currentEntityName = '';
+
+function cleanStr(str) {
+ if (!str) return "";
+ return String(str).trim().toLowerCase().replace(/\s+/g, ' ');
+}
 
 function toggleSidebar() {
  const sidebar = document.getElementById('sidebar');
@@ -201,7 +206,8 @@ async function handleLogin(event) {
  await fetchSubkonListQuick();
  }
  
- let matchedSubkon = cachedSubkons.find(s => s.toLowerCase() === u.toLowerCase());
+ let cleanU = cleanStr(u);
+ let matchedSubkon = cachedSubkons.find(s => cleanStr(s) === cleanU);
  if (matchedSubkon) {
  currentRole = matchedSubkon;
  currentUserType = 'subkon';
@@ -213,7 +219,7 @@ async function handleLogin(event) {
  return;
  }
  
- let matchedSupplier = cachedSuppliers.find(s => s.toLowerCase() === u.toLowerCase());
+ let matchedSupplier = cachedSuppliers.find(s => cleanStr(s) === cleanU);
  if (matchedSupplier) {
  currentRole = matchedSupplier;
  currentUserType = 'supplier';
@@ -235,12 +241,12 @@ async function fetchSubkonListQuick() {
  try {
  let res = await fetch(WEB_APP_URL);
  let json = await res.json(); 
- let subkonSet = new Set(["PT. MPM", "PT. BUMI JASA UTAMA"]);
+ let subkonSet = new Set(["PT. MPM", "PT. BUMI JASA UTAMA", "PT. BUMI MINERAL LAMPIA"]);
  let supplierSet = new Set();
  
  if (json.timbang) {
  json.timbang.forEach(r => { 
- if(r && r[3]) subkonSet.add(String(r[3]).trim()); 
+ if(r && r[3] && !String(r[3]).toUpperCase().includes("SUBKON")) subkonSet.add(String(r[3]).trim()); 
  if(r && r[2] && !String(r[2]).toUpperCase().includes("SUPPLIER")) supplierSet.add(String(r[2]).trim());
  });
  }
@@ -265,7 +271,6 @@ function logout() {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
- await fetchSubkonListQuick();
  let role = localStorage.getItem('authRole');
  let type = localStorage.getItem('authType');
  let entity = localStorage.getItem('authEntity');
@@ -274,6 +279,9 @@ window.addEventListener('DOMContentLoaded', async () => {
  currentUserType = type || 'admin';
  currentEntityName = entity || '';
  initDashboardSession();
+ } else {
+ // Background fetch cache cepat agar tidak delay saat submit
+ fetchSubkonListQuick();
  }
 });
 
@@ -344,9 +352,9 @@ async function loadDataFromSpreadsheet() {
  if (subkon && !subkon.toUpperCase().includes("SUBKON")) subkonSetDynamic.add(subkon);
  if (supplier && !supplier.toUpperCase().includes("SUPPLIER")) supplierSetDynamic.add(supplier);
  
- // Pembatasan Akses berdasarkan Role Login
- if (currentUserType === 'subkon' && subkon.toLowerCase() !== currentEntityName.toLowerCase()) continue;
- if (currentUserType === 'supplier' && supplier.toLowerCase() !== currentEntityName.toLowerCase()) continue;
+ // Pencocokan Role fleksibel (mengabaikan spasi/huruf besar-kecil)
+ if (currentUserType === 'subkon' && cleanStr(subkon) !== cleanStr(currentEntityName)) continue;
+ if (currentUserType === 'supplier' && cleanStr(supplier) !== cleanStr(currentEntityName)) continue;
  
  if (subkon && !isNaN(netto) && netto > 0) {
  globalTimbangData.push({
@@ -378,8 +386,8 @@ async function loadDataFromSpreadsheet() {
 
  if (subkon && !subkon.toUpperCase().includes("SUBKON")) subkonSetDynamic.add(subkon);
  
- if (currentUserType === 'subkon' && subkon.toLowerCase() !== currentEntityName.toLowerCase()) continue;
- if (currentUserType === 'supplier') continue; // Supplier tidak memiliki akses ke tab kecepatan
+ if (currentUserType === 'subkon' && cleanStr(subkon) !== cleanStr(currentEntityName)) continue;
+ if (currentUserType === 'supplier') continue; 
  
  let klasifikasi = "STANDAR";
  let valStr = String(rawKlasifikasi).toUpperCase();
@@ -551,8 +559,8 @@ function applyTimbangFilter() {
  else if (tStart) matchDate = (item.dateOut >= tStart);
  else if (tEnd) matchDate = (item.dateOut <= tEnd);
  }
- let matchSubkon = tSubkon ? (item.subkon.toLowerCase() === tSubkon.toLowerCase()) : true;
- let matchSupplier = tSupplier ? (item.supplier.toLowerCase() === tSupplier.toLowerCase()) : true;
+ let matchSubkon = tSubkon ? (cleanStr(item.subkon) === cleanStr(tSubkon)) : true;
+ let matchSupplier = tSupplier ? (cleanStr(item.supplier) === cleanStr(tSupplier)) : true;
  return matchDate && matchSubkon && matchSupplier;
  });
  renderDashboardTimbang(filteredTimbangExportData);
@@ -570,7 +578,7 @@ function applySpeedFilter() {
  else if (sStart) matchDate = (item.date >= sStart);
  else if (sEnd) matchDate = (item.date <= sEnd);
  }
- let matchSubkon = sSubkon ? (item.subkon.toLowerCase() === sSubkon.toLowerCase()) : true;
+ let matchSubkon = sSubkon ? (cleanStr(item.subkon) === cleanStr(sSubkon)) : true;
  let matchKlasifikasi = sKlasifikasi ? (item.klasifikasi === sKlasifikasi) : true;
  return matchDate && matchSubkon && matchKlasifikasi;
  });
