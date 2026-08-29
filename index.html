@@ -299,7 +299,7 @@ function initDashboardSession() {
     } else if (currentUserType === 'supplier') {
         document.getElementById('userSessionBadge').innerText = "Supplier: " + currentEntityName;
         document.getElementById('sidebarUserLabel').innerText = currentEntityName;
-        document.getElementById('filterSubkonTimbangWrapper').style.display = 'none';
+        // Supplier hanya menyembunyikan filter supplier-nya sendiri, tetapi tetap bisa memfilter subkon & melihat data kecepatan
         document.getElementById('filterSupplierTimbangWrapper').style.display = 'none';
     }
     loadDataFromSpreadsheet();
