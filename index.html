@@ -374,9 +374,9 @@ async function loadDataFromSpreadsheet() {
             
             let noLambung = row[1] ? String(row[1]).trim() : "-";
             let rawDateIn = row[3] ? String(row[3]).trim() : "";
-            let speedVal = parseFloat(row[5]);
-            let rawKlasifikasi = row[6] ? String(row[6]).trim() : "";
-            let rawRisk = row[7] ? String(row[7]).trim() : "";
+let speedVal = parseFloat(row[5]);                    
+            let rawKlasifikasi = row[6] ? String(rawKlasifikasi).trim() : ""; 
+            let rawRisk = row[7] ? String(row[7]).trim() : "";        
             
             subkonSetDynamic.add(subkon);
             if (currentUserType === 'subkon' && cleanStr(subkon) !== cleanStr(currentEntityName)) continue;
@@ -388,8 +388,9 @@ async function loadDataFromSpreadsheet() {
             } else if (valStr.includes("OVER")) {
                 klasifikasi = "OVER SPEED";
             } else if (isNaN(speedVal)) {
-                klasifikasi = "UNDER SPEED"; // Baris nilai "-" atau kosong akan terbaca Under Speed
+                klasifikasi = "UNDER SPEED"; 
             } else {
+                // Gunakan nilai absolut HANYA untuk pengecekan batas kecepatan (< 18 atau > 23.2)
                 let absSpeed = Math.abs(speedVal);
                 if (absSpeed < 18) {
                     klasifikasi = "UNDER SPEED";
@@ -407,7 +408,8 @@ async function loadDataFromSpreadsheet() {
                 subkon: subkon,
                 noLambung: noLambung,
                 date: formattedDate,
-                speed: !isNaN(speedVal) ? Math.abs(speedVal).toFixed(2) : "-",
+                // PERUBAHAN DI SINI: Pertahankan nilai asli (termasuk jika negatif / ada desimal) tanpa Math.abs()
+                speed: !isNaN(speedVal) ? speedVal.toFixed(2) : "-",
                 klasifikasi: klasifikasi,
                 risk: textRisk
             };
