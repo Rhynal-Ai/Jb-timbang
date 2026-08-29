@@ -27,7 +27,7 @@ body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
 <div>
 <label class="block text-xs font-semibold text-slate-600 mb-1">Username / Nama Subkon / Supplier</label>
 <input type="text" id="loginUser" required class="w-full bg-slate-50 border border-slate-300 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-emerald-600" placeholder="Ketik admin, subkon, atau supplier">
-<p class="text-[10px] text-slate-400 mt-1">Sandi semua subkon/supplier: <b>subkon</b></p>
+<p class="text-[10px] text-slate-400 mt-1">Sandi semua subkon/supplier: <b>subkon2026</b></p>
 </div>
 <div>
 <label class="block text-xs font-semibold text-slate-600 mb-1">Password</label>
@@ -374,9 +374,9 @@ async function loadDataFromSpreadsheet() {
             
             let noLambung = row[1] ? String(row[1]).trim() : "-";
             let rawDateIn = row[3] ? String(row[3]).trim() : "";
-let speedVal = parseFloat(row[5]);                    
-            let rawKlasifikasi = row[6] ? String(rawKlasifikasi).trim() : ""; 
-            let rawRisk = row[7] ? String(row[7]).trim() : "";        
+            let speedVal = parseFloat(row[5]);
+            let rawKlasifikasi = row[6] ? String(row[6]).trim() : "";
+            let rawRisk = row[7] ? String(row[7]).trim() : "";
             
             subkonSetDynamic.add(subkon);
             if (currentUserType === 'subkon' && cleanStr(subkon) !== cleanStr(currentEntityName)) continue;
@@ -388,9 +388,8 @@ let speedVal = parseFloat(row[5]);
             } else if (valStr.includes("OVER")) {
                 klasifikasi = "OVER SPEED";
             } else if (isNaN(speedVal)) {
-                klasifikasi = "UNDER SPEED"; 
+                klasifikasi = "UNDER SPEED";
             } else {
-                // Gunakan nilai absolut HANYA untuk pengecekan batas kecepatan (< 18 atau > 23.2)
                 let absSpeed = Math.abs(speedVal);
                 if (absSpeed < 18) {
                     klasifikasi = "UNDER SPEED";
@@ -408,7 +407,6 @@ let speedVal = parseFloat(row[5]);
                 subkon: subkon,
                 noLambung: noLambung,
                 date: formattedDate,
-                // PERUBAHAN DI SINI: Pertahankan nilai asli (termasuk jika negatif / ada desimal) tanpa Math.abs()
                 speed: !isNaN(speedVal) ? speedVal.toFixed(2) : "-",
                 klasifikasi: klasifikasi,
                 risk: textRisk
@@ -721,7 +719,7 @@ function downloadSpeedExcel() {
         "Subkon": item.subkon,
         "No. Lambung": item.noLambung,
         "Tanggal": item.date,
-        "Kecepatan (Km/Jam)": parseFloat(item.speed) || item.speed,
+        "Kecepatan (Km/Jam)": !isNaN(item.speed) ? Number(item.speed) : item.speed,
         "Klasifikasi": item.klasifikasi,
         "Risk-Based Assessment": item.risk
     }));
