@@ -254,7 +254,7 @@ async function fetchSubkonListQuick() {
         }
         if (json.kecepatan) {
             json.kecepatan.forEach(r => {
-                if(r && r[1] && !String(r[1]).toUpperCase().includes("SUBKON")) subkonSet.add(String(r[1]).trim());
+                if(r && r[0] && !String(r[0]).toUpperCase().includes("SUBKON")) subkonSet.add(String(r[0]).trim());
             });
         }
         cachedSubkons = Array.from(subkonSet);
@@ -337,86 +337,49 @@ async function loadDataFromSpreadsheet() {
         let supplierSetDynamic = new Set();
         let headerTimbangIdx = rowsTimbang.findIndex(r => r && r.some(cell => String(cell).toUpperCase().includes("NETTO")));
         if (headerTimbangIdx === -1) headerTimbangIdx = 5;
-for (let i = headerSpeedIdx + 1; i < rowsKecepatan.length; i++) {
-            let row = rowsKecepatan[i];
-            if (!row || row.length === 0) continue;
-            
-            let subkon = row[0] ? String(row[0]).trim() : "";
-            
-            if (!subkon || subkon.includes("<") || subkon.toUpperCase().includes("SUBKON") || subkon.toUpperCase().includes("JARAK")) continue;
-            
-            let noLambung = row[1] ? String(row[1]).trim() : "-";
-            let rawDateIn = row[3] ? String(row[3]).trim() : ""; 
-            let speedVal = parseFloat(row[5]);                    
-            let rawKlasifikasi = row[6] ? String(row[6]).trim() : ""; 
-            let rawRisk = row[7] ? String(row[7]).trim() : "";        
-            
-            subkonSetDynamic.add(subkon);
-            
-            // PERUBAHAN DI SINI:
-            // Hapus blok 'if (currentUserType === 'supplier') continue;' 
-            // agar akun supplier tetap bisa memuat data kecepatan unit.
+        for (let i = headerTimbangIdx + 1; i < rowsTimbang.length; i++) {
+            let row = rowsTimbang[i];
+            if (!row || row.length < 12) continue;
+            let supplier = row[2] ? String(row[2]).trim() : "Lainnya";
+            let subkon = row[3] ? String(row[3]).trim() : "";
+            let netto = parseFloat(row[10]);
+            let rawDateOut = row[14] || row[13] || row[12] || "";
+            if (subkon && !subkon.toUpperCase().includes("SUBKON")) subkonSetDynamic.add(subkon);
+            if (supplier && !supplier.toUpperCase().includes("SUPPLIER")) supplierSetDynamic.add(supplier);
             if (currentUserType === 'subkon' && cleanStr(subkon) !== cleanStr(currentEntityName)) continue;
-            
-            let klasifikasi = "STANDAR";
-            let valStr = String(rawKlasifikasi).toUpperCase();
-            if (valStr.includes("UNDER")) {
-                klasifikasi = "UNDER SPEED";
-            } else if (valStr.includes("OVER")) {
-                klasifikasi = "OVER SPEED";
-            } else if (!isNaN(speedVal)) {
-                let absSpeed = Math.abs(speedVal);
-                if (absSpeed < 18) klasifikasi = "UNDER SPEED";
-                else if (absSpeed > 23.2) klasifikasi = "OVER SPEED";
-                else klasifikasi = "STANDAR";
+            if (currentUserType === 'supplier' && cleanStr(supplier) !== cleanStr(currentEntityName)) continue;
+            if (subkon && !isNaN(netto) && netto > 0) {
+                globalTimbangData.push({
+                    rawRow: row,
+                    supplier: supplier,
+                    subkon: subkon,
+                    netto: netto,
+                    dateOut: parseUniversalDate(rawDateOut)
+                });
             }
-            
-            let formattedDate = parseUniversalDate(rawDateIn);
-            let textRisk = rawRisk ? rawRisk : (klasifikasi === "OVER SPEED" ? "HIGH RISK" : (klasifikasi === "UNDER SPEED" ? "MODERATE RISK" : "LOW RISK"));
-            
-            let item = {
-                subkon: subkon,
-                noLambung: noLambung,
-                date: formattedDate,
-                speed: !isNaN(speedVal) ? Math.abs(speedVal).toFixed(2) : "-",
-                klasifikasi: klasifikasi,
-                risk: textRisk
-            };
-            globalKecepatanData.push(item);
-            rawDataKecepatanTable.push(item);
         }
-        // Cari baris header yang benar-benar memiliki kolom 'SUBKON' di baris 15 atau sekitarnya
+        
+        let rowsKecepatan = json.kecepatan || [];
+        globalKecepatanData = [];
+        rawDataKecepatanTable = [];
         let headerSpeedIdx = rowsKecepatan.findIndex(r => r && r.some(cell => String(cell).toUpperCase().includes("SUBKON")));
-        if (headerSpeedIdx === -1) headerSpeedIdx = 14; // Indeks baris ke-15 (0-indexed)
+        if (headerSpeedIdx === -1) headerSpeedIdx = 14;
         
         for (let i = headerSpeedIdx + 1; i < rowsKecepatan.length; i++) {
             let row = rowsKecepatan[i];
             if (!row || row.length === 0) continue;
-            
-            // Mapping kolom presisi berdasarkan Gambar 2:
-            // Kolom A (index 0) = SUBKON
-            // Kolom B (index 1) = No.Lambung
-            // Kolom C (index 2) = OUT (TIME)
-            // Kolom D (index 3) = IN (DATE)
-            // Kolom E (index 4) = JARAK
-            // Kolom F (index 5) = Kecepatan Unit (Km/Jam)
-            // Kolom G (index 6) = Klasifikasi Kecepatan (Unit)
-            // Kolom H (index 7) = RISK-BASED
-            
             let subkon = row[0] ? String(row[0]).trim() : "";
             
-            // Validasi agar baris kosong atau sisa teks legenda terabaikan
             if (!subkon || subkon.includes("<") || subkon.toUpperCase().includes("SUBKON") || subkon.toUpperCase().includes("JARAK")) continue;
             
             let noLambung = row[1] ? String(row[1]).trim() : "-";
-            let rawDateIn = row[3] ? String(row[3]).trim() : ""; // Kolom D: IN (DATE)
-            let speedVal = parseFloat(row[5]);                    // Kolom F: Kecepatan
-            let rawKlasifikasi = row[6] ? String(row[6]).trim() : ""; // Kolom G: Klasifikasi
-            let rawRisk = row[7] ? String(row[7]).trim() : "";        // Kolom H: Risk-Based
+            let rawDateIn = row[3] ? String(row[3]).trim() : "";
+            let speedVal = parseFloat(row[5]);
+            let rawKlasifikasi = row[6] ? String(row[6]).trim() : "";
+            let rawRisk = row[7] ? String(row[7]).trim() : "";
             
             subkonSetDynamic.add(subkon);
             if (currentUserType === 'subkon' && cleanStr(subkon) !== cleanStr(currentEntityName)) continue;
-            if (currentUserType === 'supplier') continue;
             
             let klasifikasi = "STANDAR";
             let valStr = String(rawKlasifikasi).toUpperCase();
@@ -426,9 +389,13 @@ for (let i = headerSpeedIdx + 1; i < rowsKecepatan.length; i++) {
                 klasifikasi = "OVER SPEED";
             } else if (!isNaN(speedVal)) {
                 let absSpeed = Math.abs(speedVal);
-                if (absSpeed < 18) klasifikasi = "UNDER SPEED";
-                else if (absSpeed > 23.2) klasifikasi = "OVER SPEED";
-                else klasifikasi = "STANDAR";
+                if (absSpeed < 18) {
+                    klasifikasi = "UNDER SPEED";
+                } else if (absSpeed > 23.2) {
+                    klasifikasi = "OVER SPEED";
+                } else {
+                    klasifikasi = "STANDAR";
+                }
             }
             
             let formattedDate = parseUniversalDate(rawDateIn);
@@ -586,7 +553,7 @@ function applyTimbangFilter() {
 function applySpeedFilter() {
     let sStart = document.getElementById('speedStart').value;
     let sEnd = document.getElementById('speedEnd').value;
-    let sSubkon = currentUserType === 'admin' ? document.getElementById('speedSubkon').value : currentEntityName;
+    let sSubkon = currentUserType === 'admin' ? document.getElementById('speedSubkon').value : (currentUserType === 'subkon' ? currentEntityName : '');
     let sKlasifikasi = document.getElementById('speedKlasifikasi').value;
     
     filteredSpeedExportData = globalKecepatanData.filter(item => {
